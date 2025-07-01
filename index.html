@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Button Logger</title>
+    <title>Device Button Logger</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -10,119 +10,99 @@
             padding: 20px;
             text-align: center;
         }
-        #display {
-            font-size: 32px;
-            height: 60px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding: 0 15px;
-            background: #f9f9f9;
-        }
-        .keypad, #mode-selector {
+        #mode-selector {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: 1fr 1fr;
             gap: 10px;
             margin-bottom: 20px;
-        }
-        button {
-            font-size: 24px;
-            padding: 15px 0;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
         }
         .mode-btn {
             background: #4285F4;
             color: white;
+            padding: 15px 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
         }
         #button-container { 
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
             margin: 20px 0;
         }
         #text-container { 
             text-align: left;
             font-size: 18px;
+            border: 2px solid #34a853;
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 200px;
+            max-height: 400px;
             overflow-y: auto;
-            max-height: 300px;
         }
-        .content-btn {
+        .device-btn {
             background: #34a853;
             color: white;
-            padding: 10px;
+            padding: 20px 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 24px;
+            cursor: pointer;
         }
         .clear-btn {
             background: #ea4335;
             color: white;
             padding: 10px;
             margin-top: 10px;
-            grid-column: span 4;
+            grid-column: span 3;
         }
         .hidden { display: none; }
         .log-entry {
-            margin: 5px 0;
-            padding: 5px;
+            margin: 8px 0;
+            padding: 8px;
             border-bottom: 1px solid #eee;
         }
-        .timestamp {
-            color: #666;
-            font-size: 14px;
+        .device-name {
+            font-weight: bold;
+            color: #4285F4;
+        }
+        .press-sequence {
+            font-family: monospace;
+            background: #f3f3f3;
+            padding: 2px 5px;
+            border-radius: 3px;
         }
     </style>
 </head>
 <body>
-    <h1>Button Logger</h1>
+    <h1>Device Button Logger</h1>
     
-    <!-- Mode Selector (Replaces keypad) -->
+    <!-- Mode Selector -->
     <div id="mode-selector">
         <button class="mode-btn" onclick="showButtons()">1 - Buttons</button>
         <button class="mode-btn" onclick="showLog()">2 - Log</button>
     </div>
 
-    <!-- Hidden Keypad for initial input -->
-    <div id="input-keypad" class="hidden">
-        <div id="display">0</div>
-        <div class="keypad">
-            <button onclick="pressKey('1')">1</button>
-            <button onclick="pressKey('2')">2</button>
-            <button onclick="pressKey('3')">3</button>
-            <button onclick="pressKey('4')">4</button>
-            <button onclick="pressKey('5')">5</button>
-            <button onclick="pressKey('6')">6</button>
-            <button onclick="pressKey('7')">7</button>
-            <button onclick="pressKey('8')">8</button>
-            <button onclick="pressKey('9')">9</button>
-            <button onclick="pressKey('0')">0</button>
-            <button class="mode-btn" onclick="pressKey('Enter')">ENTER</button>
-            <button class="mode-btn" onclick="pressKey('Delete')">DEL</button>
-        </div>
-    </div>
-
-    <!-- Mode 1 Content (Buttons) -->
+    <!-- Button Panel (Mode 1) -->
     <div id="button-container" class="hidden">
-        <button class="content-btn" onclick="logButton(1)">1</button>
-        <button class="content-btn" onclick="logButton(2)">2</button>
-        <button class="content-btn" onclick="logButton(3)">3</button>
-        <button class="content-btn" onclick="logButton(4)">4</button>
-        <button class="content-btn" onclick="logButton(5)">5</button>
-        <button class="content-btn" onclick="logButton(6)">6</button>
-        <button class="content-btn" onclick="logButton(7)">7</button>
-        <button class="content-btn" onclick="logButton(8)">8</button>
-        <button class="content-btn" onclick="logButton(9)">9</button>
-        <button class="content-btn" onclick="logButton(0)">0</button>
+        <button class="device-btn" onclick="logButton(1)">1 (robloxgamer)</button>
+        <button class="device-btn" onclick="logButton(2)">2 (kitchen)</button>
+        <button class="device-btn" onclick="logButton(3)">3 (PHONE)</button>
+        <button class="device-btn" onclick="logButton(4)">4 (PC)</button>
+        <button class="device-btn" onclick="logButton(5)">5</button>
+        <button class="device-btn" onclick="logButton(6)">6</button>
+        <button class="device-btn" onclick="logButton(7)">7</button>
+        <button class="device-btn" onclick="logButton(8)">8</button>
+        <button class="device-btn" onclick="logButton(9)">9</button>
         <button class="clear-btn" onclick="clearLog()">Clear Log</button>
     </div>
 
-    <!-- Mode 2 Content (Text Display) -->
+    <!-- Log Panel (Mode 2) -->
     <div id="text-container" class="hidden">
-        <h3>Button Press Log</h3>
+        <h3>Press History</h3>
         <div id="log-display"></div>
-        <button class="mode-btn" onclick="showModeSelector()" style="margin-top: 20px;">Back</button>
+        <button class="mode-btn" onclick="showModeSelector()" style="margin-top: 20px;">Back to Menu</button>
     </div>
 
     <!-- Firebase -->
@@ -143,9 +123,19 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        let currentInput = "0";
+        // Device names mapping
+        const deviceNames = {
+            1: "robloxgamer",
+            2: "kitchen",
+            3: "PHONE",
+            4: "PC"
+        };
 
-        // Mode switching functions
+        // Track button press sequence
+        let pressSequence = [];
+        const MAX_SEQUENCE = 10; // Max buttons to remember
+
+        // Mode switching
         function showModeSelector() {
             document.getElementById('mode-selector').classList.remove('hidden');
             document.getElementById('button-container').classList.add('hidden');
@@ -155,29 +145,46 @@
         function showButtons() {
             document.getElementById('mode-selector').classList.add('hidden');
             document.getElementById('button-container').classList.remove('hidden');
+            document.getElementById('text-container').classList.add('hidden');
         }
 
         function showLog() {
             document.getElementById('mode-selector').classList.add('hidden');
+            document.getElementById('button-container').classList.add('hidden');
             document.getElementById('text-container').classList.remove('hidden');
             updateLogDisplay();
         }
 
-        // Log button press to Firebase
+        // Log button press
         function logButton(btnNumber) {
-            const timestamp = new Date().toLocaleTimeString();
+            // Add to sequence
+            pressSequence.push(btnNumber);
+            if (pressSequence.length > MAX_SEQUENCE) {
+                pressSequence.shift(); // Remove oldest if too long
+            }
+            
+            // Get device name or use button number
+            const deviceName = deviceNames[btnNumber] || `Button ${btnNumber}`;
+            const sequenceString = pressSequence.join('.');
+            
+            // Send to Firebase
             database.ref('buttonLog').push().set({
                 button: btnNumber,
-                timestamp: timestamp
+                device: deviceName,
+                sequence: sequenceString,
+                timestamp: new Date().toLocaleTimeString()
             });
         }
 
-        // Clear all logs
+        // Clear log
         function clearLog() {
-            database.ref('buttonLog').remove();
+            if (confirm("Clear all history?")) {
+                database.ref('buttonLog').remove();
+                pressSequence = [];
+            }
         }
 
-        // Update the log display
+        // Update log display
         function updateLogDisplay() {
             database.ref('buttonLog').on('value', (snapshot) => {
                 const logDisplay = document.getElementById("log-display");
@@ -194,13 +201,14 @@
                         const logEntry = document.createElement('div');
                         logEntry.className = 'log-entry';
                         logEntry.innerHTML = `
-                            Button <strong>${log.button}</strong> pressed
+                            <span class="device-name">${log.device}</span> pressed 
+                            <span class="press-sequence">${log.sequence}</span>
                             <div class="timestamp">${log.timestamp}</div>
                         `;
                         logDisplay.appendChild(logEntry);
                     });
                 } else {
-                    logDisplay.innerHTML = '<p>No buttons pressed yet</p>';
+                    logDisplay.innerHTML = '<p>No presses recorded yet</p>';
                 }
             });
         }
