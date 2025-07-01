@@ -1,42 +1,60 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Real-Time Button Press</title>
+    <title>Multi-Button Press Demo</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
             margin-top: 50px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .button-container {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
         }
         button {
-            padding: 10px 20px;
+            padding: 12px 24px;
             font-size: 16px;
-            background: #4285F4;
-            color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
+            transition: all 0.3s;
         }
+        #btn1 { background: #4285F4; color: white; }
+        #btn2 { background: #EA4335; color: white; }
+        #btn3 { background: #FBBC05; color: black; }
+        button:hover { transform: scale(1.05); }
         #status {
-            margin-top: 20px;
+            margin-top: 30px;
             font-size: 24px;
-            color: #0F9D58;
-            font-weight: bold;
+            min-height: 36px;
+            padding: 20px;
+            border-radius: 8px;
+            background: #f1f1f1;
         }
     </style>
 </head>
 <body>
-    <h1>Press the Button!</h1>
-    <button id="pressBtn">Click Me</button>
-    <p id="status">Waiting for press...</p>
+    <h1>Press Any Button!</h1>
+    
+    <div class="button-container">
+        <button id="btn1">Button 1</button>
+        <button id="btn2">Button 2</button>
+        <button id="btn3">Button 3</button>
+    </div>
+    
+    <div id="status">No button pressed yet</div>
 
     <!-- Firebase SDK v9 -->
     <script type="module">
-        // Import Firebase v9 functions
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-database.js";
 
-        // Your Firebase config
         const firebaseConfig = {
             apiKey: "AIzaSyBvvrniUNsWoCzI4oNLXxWS70iyaXP8TC4",
             authDomain: "eatgo-c7193.firebaseapp.com",
@@ -48,24 +66,40 @@
             measurementId: "G-1C1RR92Z0E"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
+        const db = getDatabase(app);
 
-        // Button click handler
-        document.getElementById("pressBtn").addEventListener("click", () => {
-            set(ref(database, 'buttonPress'), {
-                pressed: true,
-                timestamp: Date.now()
+        // Button messages
+        const buttonMessages = {
+            btn1: "You pressed the BLUE button! 🌊",
+            btn2: "RED button activated! 🔥",
+            btn3: "YELLOW button clicked! ☀️"
+        };
+
+        // Set up button click handlers
+        Object.keys(buttonMessages).forEach(btnId => {
+            document.getElementById(btnId).addEventListener("click", () => {
+                set(ref(db, 'lastPressed'), {
+                    button: btnId,
+                    message: buttonMessages[btnId],
+                    timestamp: Date.now()
+                });
             });
         });
 
         // Listen for changes
-        const buttonRef = ref(database, 'buttonPress');
-        onValue(buttonRef, (snapshot) => {
+        onValue(ref(db, 'lastPressed'), (snapshot) => {
             const data = snapshot.val();
-            if (data && data.pressed) {
-                document.getElementById("status").textContent = "PRESSED! 🎉";
+            if (data) {
+                document.getElementById("status").textContent = data.message;
+                
+                // Highlight the pressed button temporarily
+                const allButtons = document.querySelectorAll("button");
+                allButtons.forEach(btn => btn.style.opacity = "0.7");
+                document.getElementById(data.button).style.opacity = "1";
+                setTimeout(() => {
+                    allButtons.forEach(btn => btn.style.opacity = "1");
+                }, 1000);
             }
         });
     </script>
