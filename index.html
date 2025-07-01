@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Multi-Button Logger</title>
+    <title>Button Logger</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -22,7 +22,7 @@
             padding: 0 15px;
             background: #f9f9f9;
         }
-        .keypad {
+        .keypad, #mode-selector {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
@@ -35,23 +35,17 @@
             border-radius: 8px;
             cursor: pointer;
         }
-        .number { background: #f0f0f0; }
-        .action { background: #4285F4; color: white; }
-        #zero { grid-column: span 2; }
-        #button-container, #text-container {
-            min-height: 150px;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 10px 0;
+        .mode-btn {
+            background: #4285F4;
+            color: white;
         }
         #button-container { 
-            border: 2px solid #4285F4;
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 8px;
+            margin: 20px 0;
         }
         #text-container { 
-            border: 2px solid #34a853; 
             text-align: left;
             font-size: 18px;
             overflow-y: auto;
@@ -67,6 +61,7 @@
             color: white;
             padding: 10px;
             margin-top: 10px;
+            grid-column: span 4;
         }
         .hidden { display: none; }
         .log-entry {
@@ -81,22 +76,31 @@
     </style>
 </head>
 <body>
-    <h1>Multi-Button Logger</h1>
-    <div id="display">0</div>
+    <h1>Button Logger</h1>
     
-    <div class="keypad">
-        <button class="number" onclick="pressKey('1')">1</button>
-        <button class="number" onclick="pressKey('2')">2</button>
-        <button class="number" onclick="pressKey('3')">3</button>
-        <button class="number" onclick="pressKey('4')">4</button>
-        <button class="number" onclick="pressKey('5')">5</button>
-        <button class="number" onclick="pressKey('6')">6</button>
-        <button class="number" onclick="pressKey('7')">7</button>
-        <button class="number" onclick="pressKey('8')">8</button>
-        <button class="number" onclick="pressKey('9')">9</button>
-        <button class="number" id="zero" onclick="pressKey('0')">0</button>
-        <button class="action" onclick="pressKey('Enter')">ENTER</button>
-        <button class="action" onclick="pressKey('Delete')">DEL</button>
+    <!-- Mode Selector (Replaces keypad) -->
+    <div id="mode-selector">
+        <button class="mode-btn" onclick="showButtons()">1 - Buttons</button>
+        <button class="mode-btn" onclick="showLog()">2 - Log</button>
+    </div>
+
+    <!-- Hidden Keypad for initial input -->
+    <div id="input-keypad" class="hidden">
+        <div id="display">0</div>
+        <div class="keypad">
+            <button onclick="pressKey('1')">1</button>
+            <button onclick="pressKey('2')">2</button>
+            <button onclick="pressKey('3')">3</button>
+            <button onclick="pressKey('4')">4</button>
+            <button onclick="pressKey('5')">5</button>
+            <button onclick="pressKey('6')">6</button>
+            <button onclick="pressKey('7')">7</button>
+            <button onclick="pressKey('8')">8</button>
+            <button onclick="pressKey('9')">9</button>
+            <button onclick="pressKey('0')">0</button>
+            <button class="mode-btn" onclick="pressKey('Enter')">ENTER</button>
+            <button class="mode-btn" onclick="pressKey('Delete')">DEL</button>
+        </div>
     </div>
 
     <!-- Mode 1 Content (Buttons) -->
@@ -118,6 +122,7 @@
     <div id="text-container" class="hidden">
         <h3>Button Press Log</h3>
         <div id="log-display"></div>
+        <button class="mode-btn" onclick="showModeSelector()" style="margin-top: 20px;">Back</button>
     </div>
 
     <!-- Firebase -->
@@ -140,30 +145,22 @@
 
         let currentInput = "0";
 
-        // Keypad logic
-        function pressKey(key) {
-            if (key === 'Delete') {
-                currentInput = currentInput.slice(0, -1) || "0";
-            } else if (key === 'Enter') {
-                handleSubmit();
-            } else {
-                currentInput = currentInput === "0" ? key : currentInput + key;
-            }
-            document.getElementById("display").textContent = currentInput;
+        // Mode switching functions
+        function showModeSelector() {
+            document.getElementById('mode-selector').classList.remove('hidden');
+            document.getElementById('button-container').classList.add('hidden');
+            document.getElementById('text-container').classList.add('hidden');
         }
 
-        // Handle mode selection
-        function handleSubmit() {
-            hideAllContainers();
-            
-            if (currentInput === "1") {
-                document.getElementById("button-container").classList.remove("hidden");
-            } else if (currentInput === "2") {
-                document.getElementById("text-container").classList.remove("hidden");
-                updateLogDisplay();
-            }
-            currentInput = "0";
-            document.getElementById("display").textContent = currentInput;
+        function showButtons() {
+            document.getElementById('mode-selector').classList.add('hidden');
+            document.getElementById('button-container').classList.remove('hidden');
+        }
+
+        function showLog() {
+            document.getElementById('mode-selector').classList.add('hidden');
+            document.getElementById('text-container').classList.remove('hidden');
+            updateLogDisplay();
         }
 
         // Log button press to Firebase
@@ -206,12 +203,6 @@
                     logDisplay.innerHTML = '<p>No buttons pressed yet</p>';
                 }
             });
-        }
-
-        // Hide all content areas
-        function hideAllContainers() {
-            document.getElementById("button-container").classList.add("hidden");
-            document.getElementById("text-container").classList.add("hidden");
         }
     </script>
 </body>
