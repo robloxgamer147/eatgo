@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-Time Button Press</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 24px;
+            color: #0F9D58;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Press the Button!</h1>
+    <button id="pressBtn">Click Me</button>
+    <p id="status">Waiting for press...</p>
+
+    <!-- Firebase SDK v9 -->
+    <script type="module">
+        // Import Firebase v9 functions
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-database.js";
+
+        // Your Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyBvvrniUNsWoCzI4oNLXxWS70iyaXP8TC4",
+            authDomain: "eatgo-c7193.firebaseapp.com",
+            databaseURL: "https://eatgo-c7193-default-rtdb.firebaseio.com",
+            projectId: "eatgo-c7193",
+            storageBucket: "eatgo-c7193.firebasestorage.app",
+            messagingSenderId: "637516090331",
+            appId: "1:637516090331:web:96755a84703f8c67eaf5fe",
+            measurementId: "G-1C1RR92Z0E"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Button click handler
+        document.getElementById("pressBtn").addEventListener("click", () => {
+            set(ref(database, 'buttonPress'), {
+                pressed: true,
+                timestamp: Date.now()
+            });
+        });
+
+        // Listen for changes
+        const buttonRef = ref(database, 'buttonPress');
+        onValue(buttonRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data && data.pressed) {
+                document.getElementById("status").textContent = "PRESSED! 🎉";
+            }
+        });
+    </script>
+</body>
+</html>
