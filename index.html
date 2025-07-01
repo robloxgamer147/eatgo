@@ -1,60 +1,79 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Multi-Button Press Demo</title>
+    <title>Numeric Keypad</title>
     <style>
         body {
             font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
             text-align: center;
-            margin-top: 50px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
         }
-        .button-container {
+        #display {
+            font-size: 32px;
+            height: 60px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
             display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-bottom: 30px;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 15px;
+            background: #f9f9f9;
+        }
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
         }
         button {
-            padding: 12px 24px;
-            font-size: 16px;
+            font-size: 24px;
+            padding: 20px 0;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
-        #btn1 { background: #4285F4; color: white; }
-        #btn2 { background: #EA4335; color: white; }
-        #btn3 { background: #FBBC05; color: black; }
-        button:hover { transform: scale(1.05); }
-        #status {
-            margin-top: 30px;
-            font-size: 24px;
-            min-height: 36px;
-            padding: 20px;
-            border-radius: 8px;
-            background: #f1f1f1;
+        button:active {
+            transform: scale(0.95);
+        }
+        .number {
+            background: #f0f0f0;
+        }
+        .action {
+            background: #4285F4;
+            color: white;
+        }
+        #zero {
+            grid-column: span 2;
         }
     </style>
 </head>
 <body>
-    <h1>Press Any Button!</h1>
+    <h1>Numeric Keypad</h1>
+    <div id="display">0</div>
     
-    <div class="button-container">
-        <button id="btn1">Button 1</button>
-        <button id="btn2">Button 2</button>
-        <button id="btn3">Button 3</button>
+    <div class="keypad">
+        <button class="number" onclick="pressKey('1')">1</button>
+        <button class="number" onclick="pressKey('2')">2</button>
+        <button class="number" onclick="pressKey('3')">3</button>
+        <button class="number" onclick="pressKey('4')">4</button>
+        <button class="number" onclick="pressKey('5')">5</button>
+        <button class="number" onclick="pressKey('6')">6</button>
+        <button class="number" onclick="pressKey('7')">7</button>
+        <button class="number" onclick="pressKey('8')">8</button>
+        <button class="number" onclick="pressKey('9')">9</button>
+        <button class="number" id="zero" onclick="pressKey('0')">0</button>
+        <button class="action" onclick="pressKey('Enter')">ENTER</button>
+        <button class="action" onclick="pressKey('Delete')">DEL</button>
     </div>
-    
-    <div id="status">No button pressed yet</div>
 
-    <!-- Firebase SDK v9 -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-database.js";
-
+    <!-- Firebase for real-time updates (YOUR CONFIG) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script>
+        // YOUR FIREBASE CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyBvvrniUNsWoCzI4oNLXxWS70iyaXP8TC4",
             authDomain: "eatgo-c7193.firebaseapp.com",
@@ -65,41 +84,38 @@
             appId: "1:637516090331:web:96755a84703f8c67eaf5fe",
             measurementId: "G-1C1RR92Z0E"
         };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        let currentInput = "0";
 
-        // Button messages
-        const buttonMessages = {
-            btn1: "You pressed the BLUE button! 🌊",
-            btn2: "RED button activated! 🔥",
-            btn3: "YELLOW button clicked! ☀️"
-        };
-
-        // Set up button click handlers
-        Object.keys(buttonMessages).forEach(btnId => {
-            document.getElementById(btnId).addEventListener("click", () => {
-                set(ref(db, 'lastPressed'), {
-                    button: btnId,
-                    message: buttonMessages[btnId],
-                    timestamp: Date.now()
-                });
+        function pressKey(key) {
+            if (key === 'Delete') {
+                currentInput = currentInput.slice(0, -1) || "0";
+            } else if (key === 'Enter') {
+                alert("Submitted: " + currentInput);
+                currentInput = "0";
+            } else {
+                currentInput = currentInput === "0" ? key : currentInput + key;
+            }
+            
+            // Update display locally
+            document.getElementById("display").textContent = currentInput;
+            
+            // Sync with YOUR Firebase Realtime Database
+            database.ref('keypad').set({
+                value: currentInput,
+                lastPressed: key,
+                timestamp: Date.now()
             });
-        });
+        }
 
-        // Listen for changes
-        onValue(ref(db, 'lastPressed'), (snapshot) => {
+        // Listen for remote changes
+        database.ref('keypad').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
-                document.getElementById("status").textContent = data.message;
-                
-                // Highlight the pressed button temporarily
-                const allButtons = document.querySelectorAll("button");
-                allButtons.forEach(btn => btn.style.opacity = "0.7");
-                document.getElementById(data.button).style.opacity = "1";
-                setTimeout(() => {
-                    allButtons.forEach(btn => btn.style.opacity = "1");
-                }, 1000);
+                currentInput = data.value;
+                document.getElementById("display").textContent = currentInput;
             }
         });
     </script>
