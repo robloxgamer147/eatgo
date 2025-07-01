@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Button-to-Text Sync</title>
+    <title>Multi-Button Logger</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -44,24 +44,44 @@
             border-radius: 8px;
             margin: 10px 0;
         }
-        #button-container { border: 2px solid #4285F4; }
+        #button-container { 
+            border: 2px solid #4285F4;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
         #text-container { 
             border: 2px solid #34a853; 
             text-align: left;
             font-size: 18px;
+            overflow-y: auto;
+            max-height: 300px;
         }
         .content-btn {
             background: #34a853;
             color: white;
-            margin: 5px;
             padding: 10px;
-            width: 80%;
+        }
+        .clear-btn {
+            background: #ea4335;
+            color: white;
+            padding: 10px;
+            margin-top: 10px;
         }
         .hidden { display: none; }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .timestamp {
+            color: #666;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
-    <h1>Control Panel</h1>
+    <h1>Multi-Button Logger</h1>
     <div id="display">0</div>
     
     <div class="keypad">
@@ -81,16 +101,23 @@
 
     <!-- Mode 1 Content (Buttons) -->
     <div id="button-container" class="hidden">
-        <h3>Button Panel</h3>
-        <button class="content-btn" onclick="sendText('Button A pressed: System normal')">Status</button>
-        <button class="content-btn" onclick="sendText('Button B pressed: Alert triggered')">Alert</button>
-        <button class="content-btn" onclick="sendText('Button C pressed: Emergency protocol')">Emergency</button>
+        <button class="content-btn" onclick="logButton(1)">1</button>
+        <button class="content-btn" onclick="logButton(2)">2</button>
+        <button class="content-btn" onclick="logButton(3)">3</button>
+        <button class="content-btn" onclick="logButton(4)">4</button>
+        <button class="content-btn" onclick="logButton(5)">5</button>
+        <button class="content-btn" onclick="logButton(6)">6</button>
+        <button class="content-btn" onclick="logButton(7)">7</button>
+        <button class="content-btn" onclick="logButton(8)">8</button>
+        <button class="content-btn" onclick="logButton(9)">9</button>
+        <button class="content-btn" onclick="logButton(0)">0</button>
+        <button class="clear-btn" onclick="clearLog()">Clear Log</button>
     </div>
 
     <!-- Mode 2 Content (Text Display) -->
     <div id="text-container" class="hidden">
-        <h3>Message Display</h3>
-        <p id="message-text">Waiting for messages...</p>
+        <h3>Button Press Log</h3>
+        <div id="log-display"></div>
     </div>
 
     <!-- Firebase -->
@@ -133,22 +160,51 @@
                 document.getElementById("button-container").classList.remove("hidden");
             } else if (currentInput === "2") {
                 document.getElementById("text-container").classList.remove("hidden");
-                // Load any existing message
-                database.ref('lastMessage').once('value').then((snapshot) => {
-                    if (snapshot.exists()) {
-                        document.getElementById("message-text").textContent = snapshot.val().text;
-                    }
-                });
+                updateLogDisplay();
             }
             currentInput = "0";
             document.getElementById("display").textContent = currentInput;
         }
 
-        // Send text from buttons to display
-        function sendText(text) {
-            database.ref('lastMessage').set({
-                text: text,
-                timestamp: Date.now()
+        // Log button press to Firebase
+        function logButton(btnNumber) {
+            const timestamp = new Date().toLocaleTimeString();
+            database.ref('buttonLog').push().set({
+                button: btnNumber,
+                timestamp: timestamp
+            });
+        }
+
+        // Clear all logs
+        function clearLog() {
+            database.ref('buttonLog').remove();
+        }
+
+        // Update the log display
+        function updateLogDisplay() {
+            database.ref('buttonLog').on('value', (snapshot) => {
+                const logDisplay = document.getElementById("log-display");
+                logDisplay.innerHTML = '';
+                
+                if (snapshot.exists()) {
+                    const logs = [];
+                    snapshot.forEach((childSnapshot) => {
+                        logs.push(childSnapshot.val());
+                    });
+                    
+                    // Display newest first
+                    logs.reverse().forEach(log => {
+                        const logEntry = document.createElement('div');
+                        logEntry.className = 'log-entry';
+                        logEntry.innerHTML = `
+                            Button <strong>${log.button}</strong> pressed
+                            <div class="timestamp">${log.timestamp}</div>
+                        `;
+                        logDisplay.appendChild(logEntry);
+                    });
+                } else {
+                    logDisplay.innerHTML = '<p>No buttons pressed yet</p>';
+                }
             });
         }
 
@@ -157,14 +213,6 @@
             document.getElementById("button-container").classList.add("hidden");
             document.getElementById("text-container").classList.add("hidden");
         }
-
-        // Listen for incoming messages
-        database.ref('lastMessage').on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data && document.getElementById("text-container").classList.contains("hidden") === false) {
-                document.getElementById("message-text").textContent = data.text;
-            }
-        });
     </script>
 </body>
 </html>
