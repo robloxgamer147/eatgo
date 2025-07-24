@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cosmic Clicker: Evolution</title>
+    <title>Cosmic Clicker</title>
     <style>
         :root {
             --primary: #0066ff;
@@ -18,6 +18,7 @@
             --dark-text: #333333;
             --success: #4CAF50;
             --warning: #FFC107;
+            --danger: #FF5252;
         }
         
         * {
@@ -52,6 +53,8 @@
             padding: 10px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         
         .resource-display {
@@ -283,6 +286,11 @@
             background-color: rgba(255, 51, 102, 0.2);
         }
         
+        .rebirth-option.selected {
+            background-color: rgba(255, 51, 102, 0.3);
+            box-shadow: 0 0 0 2px var(--rebirth);
+        }
+        
         .rebirth-option-title {
             font-weight: bold;
             color: var(--rebirth);
@@ -325,6 +333,15 @@
         
         .btn-danger:hover {
             background-color: #cc2255;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning);
+            color: var(--dark-text);
+        }
+        
+        .btn-warning:hover {
+            background-color: #e0a800;
         }
         
         /* Mobile Controls */
@@ -388,6 +405,10 @@
             transform: translateX(0);
         }
         
+        .notification.error {
+            background-color: rgba(255, 82, 82, 0.8);
+        }
+        
         /* Progress bars */
         .progress-container {
             width: 100%;
@@ -416,6 +437,7 @@
                 <div class="meta-item">Prestige: <span id="prestige-level">0</span></div>
                 <div class="meta-item">Rebirth: <span id="rebirth-level">0</span></div>
             </div>
+            <button id="reset-btn" class="btn btn-warning">Reset Game</button>
         </div>
         
         <div class="game-area">
@@ -534,6 +556,7 @@
             rebirthBonus: 1,
             nextRebirthAt: 1000000,
             rebirthUpgrades: [],
+            selectedRebirthUpgrade: null,
             
             // Upgrades
             upgrades: {
@@ -549,8 +572,7 @@
             lastUpdate: Date.now(),
             lastAutoClick: Date.now(),
             particles: [],
-            notifications: [],
-            selectedRebirthUpgrade: null
+            notifications: []
         };
 
         // =============================================
@@ -572,6 +594,7 @@
             // Buttons
             prestigeBtn: document.getElementById('prestige-btn'),
             rebirthBtn: document.getElementById('rebirth-btn'),
+            resetBtn: document.getElementById('reset-btn'),
             
             // Shop elements
             shopTabs: document.querySelectorAll('.shop-tab'),
@@ -599,7 +622,7 @@
         // Upgrade Definitions
         // =============================================
         
-        // Click Upgrades - Now with progression requirements
+        // Click Upgrades - With progression requirements
         for (let i = 1; i <= 20; i++) {
             const cost = Math.floor(50 * Math.pow(1.8, i));
             const power = 1 + Math.floor(i / 5);
@@ -667,17 +690,21 @@
         // Game Initialization
         // =============================================
         function init() {
-            // Set up event listeners
-            setupEventListeners();
-            
-            // Generate upgrade elements
-            generateUpgradeElements();
-            
-            // Load game from localStorage if available
+            // Load game first
             loadGame();
+            
+            // Then setup everything else
+            setupEventListeners();
+            generateUpgradeElements();
             
             // Start game loop
             gameLoop();
+            
+            // Setup auto-save
+            setInterval(saveGame, 30000);
+            window.addEventListener('beforeunload', saveGame);
+            
+            showNotification("Game loaded!");
         }
 
         function setupEventListeners() {
@@ -698,7 +725,11 @@
             // Prestige/Rebirth buttons
             elements.prestigeBtn.addEventListener('click', performPrestige);
             elements.rebirthBtn.addEventListener('click', () => {
-                elements.rebirthModal.classList.add('active');
+                if (game.resources >= game.nextRebirthAt) {
+                    elements.rebirthModal.classList.add('active');
+                } else {
+                    showNotification(`You need ${formatNumber(game.nextRebirthAt)} energy to rebirth!`, true);
+                }
             });
             
             // Rebirth modal
@@ -713,6 +744,14 @@
             elements.confirmRebirth.addEventListener('click', performRebirth);
             elements.cancelRebirth.addEventListener('click', () => {
                 elements.rebirthModal.classList.remove('active');
+                game.selectedRebirthUpgrade = null;
+            });
+            
+            // Reset button
+            elements.resetBtn.addEventListener('click', () => {
+                if (confirm("Are you sure you want to reset ALL game progress? This cannot be undone!")) {
+                    resetGame();
+                }
             });
             
             // Touch events for mobile
@@ -786,7 +825,7 @@
             
             // Handle notifications
             if (game.notifications.length > 0) {
-                showNotification(game.notifications[0]);
+                showNotification(game.notifications[0].message, game.notifications[0].isError);
                 game.notifications.shift();
             }
             
@@ -844,15 +883,29 @@
                 );
                 
                 if (missing.length > 0) {
-                    showNotification(`Requires ${missing.map(m => game.upgrades[type].find(u => u.id === m).name).join(', ')}`);
+                    const missingNames = missing.map(m => 
+                        game.upgrades[type].find(u => u.id === m).name
+                    ).join(', ');
+                    showNotification(`Requires: ${missingNames}`, true);
                     return;
                 }
+            }
+            
+            // Check special requirements
+            if (upgrade.requiresPrestige && game.prestigeLevel < 1) {
+                showNotification("Requires at least 1 Prestige!", true);
+                return;
+            }
+            
+            if (upgrade.requiresRebirth && game.rebirthLevel < 1) {
+                showNotification("Requires at least 1 Rebirth!", true);
+                return;
             }
             
             if (!upgrade.purchased && game.resources >= upgrade.cost) {
                 game.resources -= upgrade.cost;
                 upgrade.purchased = true;
-                upgrade.effect();
+                if (upgrade.effect) upgrade.effect();
                 showNotification(`Upgrade purchased: ${upgrade.name}`);
             }
         }
@@ -875,6 +928,11 @@
                 
                 showNotification(`Prestige ${game.prestigeLevel} achieved!`);
                 createParticles(100);
+                
+                // Save immediately after prestige
+                saveGame();
+            } else {
+                showNotification(`You need ${formatNumber(game.nextPrestigeAt)} energy to prestige!`, true);
             }
         }
 
@@ -883,20 +941,7 @@
                 game.rebirthLevel++;
                 
                 // Apply selected rebirth upgrade
-                switch(game.selectedRebirthUpgrade) {
-                    case 'click-power':
-                        game.rebirthUpgrades.push('click-power');
-                        break;
-                    case 'auto-speed':
-                        game.rebirthUpgrades.push('auto-speed');
-                        break;
-                    case 'energy-gain':
-                        game.rebirthUpgrades.push('energy-gain');
-                        break;
-                    case 'upgrade-cost':
-                        game.rebirthUpgrades.push('upgrade-cost');
-                        break;
-                }
+                game.rebirthUpgrades.push(game.selectedRebirthUpgrade);
                 
                 // Calculate new rebirth bonus
                 game.rebirthBonus = 1;
@@ -924,6 +969,7 @@
                 game.baseClickPower = 1;
                 game.autoClickers = 0;
                 game.autoClickerCost = 15;
+                game.autoClickMultiplier = 1;
                 
                 // Reset all upgrades
                 Object.values(game.upgrades).forEach(category => {
@@ -932,10 +978,16 @@
                 
                 // Close modal
                 elements.rebirthModal.classList.remove('active');
+                elements.rebirthOptions.forEach(opt => opt.classList.remove('selected'));
                 game.selectedRebirthUpgrade = null;
                 
                 showNotification(`Rebirth ${game.rebirthLevel} completed!`);
                 createParticles(200, undefined, undefined, '#ff3366');
+                
+                // Save immediately after rebirth
+                saveGame();
+            } else if (!game.selectedRebirthUpgrade) {
+                showNotification("Please select a rebirth upgrade first!", true);
             }
         }
 
@@ -954,10 +1006,13 @@
             // Click upgrades
             game.upgrades.click.forEach((upgrade, index) => {
                 const element = document.createElement('div');
-                element.className = `upgrade-item ${upgrade.purchased ? 'owned' : upgrade.requires.length > 0 ? 'locked' : ''}`;
                 
                 const requirementsText = upgrade.requires.length > 0 ? 
-                    `<div class="upgrade-requirements">Requires: ${upgrade.requires.join(', ')}</div>` : '';
+                    `<div class="upgrade-requirements">Requires: ${
+                        upgrade.requires.map(req => 
+                            game.upgrades.click.find(u => u.id === req).name
+                        ).join(', ')
+                    }</div>` : '';
                 
                 element.innerHTML = `
                     <div class="upgrade-header">
@@ -968,19 +1023,71 @@
                     ${requirementsText}
                 `;
                 
-                if (!upgrade.purchased && upgrade.requires.length === 0) {
-                    element.addEventListener('click', () => buyUpgrade('click', index));
-                }
-                
+                element.addEventListener('click', () => buyUpgrade('click', index));
                 elements.clickUpgrades.appendChild(element);
             });
             
-            // Repeat for other upgrade types (auto, prestige, rebirth)
-            // ... (similar structure as above)
+            // Auto upgrades
+            game.upgrades.auto.forEach((upgrade, index) => {
+                const element = document.createElement('div');
+                
+                const requirementsText = upgrade.requires.length > 0 ? 
+                    `<div class="upgrade-requirements">Requires: ${
+                        upgrade.requires.map(req => 
+                            game.upgrades.auto.find(u => u.id === req).name
+                        ).join(', ')
+                    }</div>` : '';
+                
+                element.innerHTML = `
+                    <div class="upgrade-header">
+                        <div class="upgrade-name">${upgrade.name}</div>
+                        <div class="upgrade-cost">${formatNumber(upgrade.cost)}</div>
+                    </div>
+                    <div class="upgrade-description">${upgrade.description}</div>
+                    ${requirementsText}
+                `;
+                
+                element.addEventListener('click', () => buyUpgrade('auto', index));
+                elements.autoUpgrades.appendChild(element);
+            });
+            
+            // Prestige upgrades
+            game.upgrades.prestige.forEach((upgrade, index) => {
+                const element = document.createElement('div');
+                
+                element.innerHTML = `
+                    <div class="upgrade-header">
+                        <div class="upgrade-name">${upgrade.name}</div>
+                        <div class="upgrade-cost">${formatNumber(upgrade.cost)} prestige</div>
+                    </div>
+                    <div class="upgrade-description">${upgrade.description}</div>
+                    <div class="upgrade-requirements">Requires at least 1 Prestige</div>
+                `;
+                
+                element.addEventListener('click', () => buyUpgrade('prestige', index));
+                elements.prestigeUpgrades.appendChild(element);
+            });
+            
+            // Rebirth upgrades
+            game.upgrades.rebirth.forEach((upgrade, index) => {
+                const element = document.createElement('div');
+                
+                element.innerHTML = `
+                    <div class="upgrade-header">
+                        <div class="upgrade-name">${upgrade.name}</div>
+                        <div class="upgrade-cost">${formatNumber(upgrade.cost)} rebirth</div>
+                    </div>
+                    <div class="upgrade-description">${upgrade.description}</div>
+                    <div class="upgrade-requirements">Requires at least 1 Rebirth</div>
+                `;
+                
+                element.addEventListener('click', () => buyUpgrade('rebirth', index));
+                elements.rebirthUpgrades.appendChild(element);
+            });
         }
 
         function updateShopItems() {
-            // Update click upgrades
+            // Click upgrades
             game.upgrades.click.forEach((upgrade, index) => {
                 const element = elements.clickUpgrades.children[index];
                 const canAfford = game.resources >= upgrade.cost;
@@ -993,20 +1100,53 @@
                     !requirementsMet ? 'locked' : 
                     canAfford ? '' : 'disabled'
                 }`;
-                
-                // Update event listener
-                element.onclick = null;
-                if (!upgrade.purchased && requirementsMet) {
-                    element.addEventListener('click', () => buyUpgrade('click', index));
-                }
             });
             
-            // Repeat for other upgrade types (auto, prestige, rebirth)
-            // ... (similar logic as above)
+            // Auto upgrades
+            game.upgrades.auto.forEach((upgrade, index) => {
+                const element = elements.autoUpgrades.children[index];
+                const canAfford = game.resources >= upgrade.cost;
+                const requirementsMet = upgrade.requires.every(req => 
+                    game.upgrades.auto.find(u => u.id === req && u.purchased)
+                );
+                
+                element.className = `upgrade-item ${
+                    upgrade.purchased ? 'owned' : 
+                    !requirementsMet ? 'locked' : 
+                    canAfford ? '' : 'disabled'
+                }`;
+            });
+            
+            // Prestige upgrades
+            game.upgrades.prestige.forEach((upgrade, index) => {
+                const element = elements.prestigeUpgrades.children[index];
+                const canAfford = game.prestigeLevel >= upgrade.cost;
+                const requirementsMet = game.prestigeLevel > 0;
+                
+                element.className = `upgrade-item ${
+                    upgrade.purchased ? 'owned' : 
+                    !requirementsMet ? 'locked' : 
+                    canAfford ? '' : 'disabled'
+                }`;
+            });
+            
+            // Rebirth upgrades
+            game.upgrades.rebirth.forEach((upgrade, index) => {
+                const element = elements.rebirthUpgrades.children[index];
+                const canAfford = game.rebirthLevel >= upgrade.cost;
+                const requirementsMet = game.rebirthLevel > 0;
+                
+                element.className = `upgrade-item ${
+                    upgrade.purchased ? 'owned' : 
+                    !requirementsMet ? 'locked' : 
+                    canAfford ? '' : 'disabled'
+                }`;
+            });
         }
 
-        function showNotification(message) {
+        function showNotification(message, isError = false) {
             elements.notificationMessage.textContent = message;
+            elements.notification.className = `notification ${isError ? 'error' : ''}`;
             elements.notification.classList.add('show');
             
             setTimeout(() => {
@@ -1038,6 +1178,145 @@
         }
 
         // =============================================
+        // Save/Load System
+        // =============================================
+        function saveGame() {
+            const saveData = {
+                version: 2, // Version identifier for save compatibility
+                resources: game.resources,
+                totalResources: game.totalResources,
+                clicks: game.clicks,
+                baseClickPower: game.baseClickPower,
+                autoClickers: game.autoClickers,
+                autoClickerCost: game.autoClickerCost,
+                autoClickMultiplier: game.autoClickMultiplier,
+                prestigeLevel: game.prestigeLevel,
+                rebirthLevel: game.rebirthLevel,
+                rebirthUpgrades: game.rebirthUpgrades,
+                // Only save purchased upgrade IDs
+                purchasedUpgrades: [
+                    ...game.upgrades.click.filter(u => u.purchased).map(u => u.id),
+                    ...game.upgrades.auto.filter(u => u.purchased).map(u => u.id),
+                    ...game.upgrades.prestige.filter(u => u.purchased).map(u => u.id),
+                    ...game.upgrades.rebirth.filter(u => u.purchased).map(u => u.id)
+                ],
+                playTime: game.playTime + (Date.now() - game.startTime) / 1000
+            };
+            
+            try {
+                localStorage.setItem('cosmicClickerSave', JSON.stringify(saveData));
+                console.log("Game saved successfully");
+            } catch (e) {
+                console.error("Failed to save game:", e);
+                showNotification("Failed to save game!", true);
+            }
+        }
+
+        function loadGame() {
+            const saveString = localStorage.getItem('cosmicClickerSave');
+            if (!saveString) {
+                console.log("No save data found, starting fresh");
+                return;
+            }
+            
+            try {
+                const saveData = JSON.parse(saveString);
+                
+                // Basic validation
+                if (!saveData.version || typeof saveData.resources !== 'number') {
+                    throw new Error("Invalid save data format");
+                }
+                
+                // Restore simple values
+                game.resources = saveData.resources || 0;
+                game.totalResources = saveData.totalResources || 0;
+                game.clicks = saveData.clicks || 0;
+                game.baseClickPower = saveData.baseClickPower || 1;
+                game.autoClickers = saveData.autoClickers || 0;
+                game.autoClickerCost = saveData.autoClickerCost || 15;
+                game.autoClickMultiplier = saveData.autoClickMultiplier || 1;
+                game.prestigeLevel = saveData.prestigeLevel || 0;
+                game.rebirthLevel = saveData.rebirthLevel || 0;
+                game.rebirthUpgrades = saveData.rebirthUpgrades || [];
+                game.playTime = saveData.playTime || 0;
+                game.startTime = Date.now();
+                
+                // Restore rebirth upgrades effects
+                game.rebirthBonus = 1;
+                game.clickMultiplier = 1;
+                game.rebirthUpgrades.forEach(upgrade => {
+                    switch(upgrade) {
+                        case 'click-power':
+                            game.clickMultiplier *= 2;
+                            break;
+                        case 'auto-speed':
+                            game.autoClickMultiplier *= 2;
+                            break;
+                        case 'energy-gain':
+                            game.rebirthBonus *= 2;
+                            break;
+                    }
+                });
+                
+                // Restore purchased upgrades
+                if (Array.isArray(saveData.purchasedUpgrades)) {
+                    saveData.purchasedUpgrades.forEach(upgradeId => {
+                        // Check all upgrade categories
+                        for (const category of ['click', 'auto', 'prestige', 'rebirth']) {
+                            const upgrade = game.upgrades[category].find(u => u.id === upgradeId);
+                            if (upgrade) {
+                                upgrade.purchased = true;
+                                if (upgrade.effect) upgrade.effect();
+                                break;
+                            }
+                        }
+                    });
+                }
+                
+                console.log("Game loaded successfully");
+            } catch (e) {
+                console.error("Failed to load save:", e);
+                showNotification("Failed to load save, starting fresh", true);
+                resetGame();
+            }
+        }
+
+        function resetGame() {
+            // Reset all game state
+            game.resources = 0;
+            game.totalResources = 0;
+            game.clicks = 0;
+            game.baseClickPower = 1;
+            game.clickMultiplier = 1;
+            game.autoClickers = 0;
+            game.autoClickerCost = 15;
+            game.autoClickMultiplier = 1;
+            game.prestigeLevel = 0;
+            game.prestigeBonus = 1;
+            game.rebirthLevel = 0;
+            game.rebirthBonus = 1;
+            game.rebirthUpgrades = [];
+            game.playTime = 0;
+            game.startTime = Date.now();
+            
+            // Reset all upgrades
+            Object.values(game.upgrades).forEach(category => {
+                category.forEach(upgrade => {
+                    upgrade.purchased = false;
+                });
+            });
+            
+            // Clear save data
+            localStorage.removeItem('cosmicClickerSave');
+            
+            console.log("Game reset to default state");
+            showNotification("Game reset to default");
+            
+            // Refresh UI
+            generateUpgradeElements();
+        }
+
+        // =============================================
         // Utility Functions
         // =============================================
         function formatNumber(num) {
@@ -1046,23 +1325,6 @@
             if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
             return Math.floor(num);
         }
-
-        function saveGame() {
-            localStorage.setItem('cosmicClickerSave', JSON.stringify(game));
-        }
-
-        function loadGame() {
-            const save = localStorage.getItem('cosmicClickerSave');
-            if (save) {
-                Object.assign(game, JSON.parse(save));
-                game.lastUpdate = Date.now();
-                showNotification('Game loaded!');
-            }
-        }
-
-        // Auto-save every 30 seconds
-        setInterval(saveGame, 30000);
-        window.addEventListener('beforeunload', saveGame);
 
         // Start the game
         init();
