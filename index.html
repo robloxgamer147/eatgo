@@ -201,6 +201,26 @@
             padding: 10px;
         }
         
+        /* PC layout - side by side */
+        .pc-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .pc-left-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .pc-right-panel {
+            display: flex;
+            flex-direction: column;
+        }
+        
         .tab {
             padding: 12px 20px;
             cursor: pointer;
@@ -348,8 +368,66 @@
             background: var(--secondary);
         }
         
+        /* Settings menu */
+        #settings-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 50, 100, 0.7);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        #settings-menu {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            background: rgba(0, 20, 40, 0.9);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            display: none;
+        }
+        
+        #settings-menu.active {
+            display: block;
+        }
+        
+        .settings-option {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .settings-option:hover {
+            background-color: rgba(0, 100, 200, 0.5);
+        }
+        
         /* Responsive design */
-        @media (max-width: 600px) {
+        @media (max-width: 768px) {
+            .pc-layout {
+                display: block;
+            }
+            
+            .pc-left-panel, .pc-right-panel {
+                width: 100%;
+            }
+            
+            #clicker {
+                width: 150px;
+                height: 150px;
+            }
+            
             .tabs {
                 flex-direction: column;
             }
@@ -357,47 +435,58 @@
             .tab {
                 margin: 5px 0;
             }
-            
-            #clicker {
-                width: 150px;
-                height: 150px;
-            }
         }
     </style>
 </head>
 <body>
-    <div class="resource">Cosmic Energy: <span id="resources" class="resource-value">0</span></div>
-    <div class="resource">Prestige: <span id="prestige" class="resource-value">0</span> | Rebirth: <span id="rebirth" class="resource-value">0</span></div>
+    <!-- Settings Button -->
+    <div id="settings-btn">⚙️</div>
     
-    <div id="clicker-container">
-        <div id="clicker">+<span id="click-value">1</span></div>
+    <!-- Settings Menu -->
+    <div id="settings-menu">
+        <div class="section-title">Settings</div>
+        <div class="settings-option" id="reset-game-btn">Reset Game</div>
+        <div class="settings-option" id="export-save-btn">Export Save</div>
+        <div class="settings-option" id="import-save-btn">Import Save</div>
     </div>
-    
-    <div class="resource">Click Power: <span id="click-power" class="resource-value">1</span></div>
-    <div class="resource">Auto-Clickers: <span id="auto-clickers" class="resource-value">0</span> (<span id="auto-rate" class="resource-value">0</span>/sec)</div>
-    
-    <div>
-        <button id="prestige-btn">Prestige</button>
-        <button id="rebirth-btn">Rebirth</button>
-        <button id="reset-btn">Reset Game</button>
-    </div>
-    
-    <div class="tabs">
-        <div class="tab active" data-tab="click">Click</div>
-        <div class="tab" data-tab="auto">Auto</div>
-        <div class="tab" data-tab="prestige">Prestige</div>
-        <div class="tab" data-tab="rebirth">Rebirth</div>
-        <div class="tab" data-tab="advancements">Advancements</div>
-    </div>
-    
-    <div id="shop">
-        <!-- Upgrades will be added here by JavaScript -->
-    </div>
-    
-    <div id="advancements-container" class="advancements-container hidden">
-        <div class="section-title">Advancements</div>
-        <div id="advancements-list">
-            <!-- Advancements will be added here by JavaScript -->
+
+    <div class="pc-layout">
+        <div class="pc-left-panel">
+            <div class="resource">Cosmic Energy: <span id="resources" class="resource-value">0</span></div>
+            <div class="resource">Prestige: <span id="prestige" class="resource-value">0</span> | Rebirth: <span id="rebirth" class="resource-value">0</span></div>
+            
+            <div id="clicker-container">
+                <div id="clicker">+<span id="click-value">1</span></div>
+            </div>
+            
+            <div class="resource">Click Power: <span id="click-power" class="resource-value">1</span></div>
+            <div class="resource">Auto-Clickers: <span id="auto-clickers" class="resource-value">0</span> (<span id="auto-rate" class="resource-value">0</span>/sec)</div>
+            
+            <div>
+                <button id="prestige-btn">Prestige</button>
+                <button id="rebirth-btn">Rebirth</button>
+            </div>
+        </div>
+        
+        <div class="pc-right-panel">
+            <div class="tabs">
+                <div class="tab active" data-tab="click">Click</div>
+                <div class="tab" data-tab="auto">Auto</div>
+                <div class="tab" data-tab="prestige">Prestige</div>
+                <div class="tab" data-tab="rebirth">Rebirth</div>
+                <div class="tab" data-tab="advancements">Advancements</div>
+            </div>
+            
+            <div id="shop">
+                <!-- Upgrades will be added here by JavaScript -->
+            </div>
+            
+            <div id="advancements-container" class="advancements-container hidden">
+                <div class="section-title">Advancements</div>
+                <div id="advancements-list">
+                    <!-- Advancements will be added here by JavaScript -->
+                </div>
+            </div>
         </div>
     </div>
 
@@ -429,7 +518,8 @@
             lastAutoClick: Date.now(),
             startTime: Date.now(),
             playTime: 0,
-            hasGivenFirstAutoClicker: false // Track if we've given the first auto-clicker
+            hasGivenFirstAutoClicker: false,
+            isMobile: window.innerWidth <= 768
         };
 
         // DOM elements
@@ -445,11 +535,16 @@
             rebirth: document.getElementById('rebirth'),
             prestigeBtn: document.getElementById('prestige-btn'),
             rebirthBtn: document.getElementById('rebirth-btn'),
-            resetBtn: document.getElementById('reset-btn'),
             shop: document.getElementById('shop'),
             tabs: document.querySelectorAll('.tab'),
             advancementsContainer: document.getElementById('advancements-container'),
-            advancementsList: document.getElementById('advancements-list')
+            advancementsList: document.getElementById('advancements-list'),
+            settingsBtn: document.getElementById('settings-btn'),
+            settingsMenu: document.getElementById('settings-menu'),
+            resetGameBtn: document.getElementById('reset-game-btn'),
+            exportSaveBtn: document.getElementById('export-save-btn'),
+            importSaveBtn: document.getElementById('import-save-btn'),
+            pcLayout: document.querySelector('.pc-layout')
         };
 
         // Initialize upgrades
@@ -1231,6 +1326,56 @@
             }
         }
 
+        // Export save
+        function exportSave() {
+            const saveData = localStorage.getItem('cosmicClickerSave');
+            if (!saveData) {
+                alert("No save data to export!");
+                return;
+            }
+            
+            const blob = new Blob([saveData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'cosmic_clicker_save.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Import save
+        function importSave() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = event => {
+                    try {
+                        const saveData = JSON.parse(event.target.result);
+                        if (!saveData.version || typeof saveData.resources !== 'number') {
+                            throw new Error("Invalid save file");
+                        }
+                        
+                        localStorage.setItem('cosmicClickerSave', JSON.stringify(saveData));
+                        alert("Save imported successfully! Refreshing...");
+                        setTimeout(() => location.reload(), 1000);
+                    } catch (err) {
+                        alert("Failed to import save: " + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        }
+
         // Reset game
         function resetGame() {
             if (!confirm("Are you sure you want to reset ALL progress? This cannot be undone!")) return;
@@ -1258,6 +1403,9 @@
             updateUI();
             renderUpgrades('click');
             renderAdvancements();
+            toggleSettingsMenu();
+            
+            showNotification("Game has been reset!");
         }
 
         // Prestige
@@ -1318,9 +1466,17 @@
                 showNotification(`Rebirth ${game.rebirthLevel} achieved!`);
             }
         }
+        
+        // Toggle settings menu
+        function toggleSettingsMenu() {
+            elements.settingsMenu.classList.toggle('active');
+        }
 
         // Initialize the game
         function init() {
+            // Check if mobile
+            game.isMobile = window.innerWidth <= 768;
+            
             initUpgrades();
             initAdvancements();
             loadGame();
@@ -1351,7 +1507,18 @@
             
             elements.prestigeBtn.addEventListener('click', performPrestige);
             elements.rebirthBtn.addEventListener('click', performRebirth);
-            elements.resetBtn.addEventListener('click', resetGame);
+            elements.resetGameBtn.addEventListener('click', resetGame);
+            elements.exportSaveBtn.addEventListener('click', exportSave);
+            elements.importSaveBtn.addEventListener('click', importSave);
+            elements.settingsBtn.addEventListener('click', toggleSettingsMenu);
+            
+            // Close settings when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!elements.settingsMenu.contains(e.target) && 
+                    !elements.settingsBtn.contains(e.target)) {
+                    elements.settingsMenu.classList.remove('active');
+                }
+            });
             
             // Tab switching
             elements.tabs.forEach(tab => {
