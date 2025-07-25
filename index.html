@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cosmic Clicker</title>
     <style>
         :root {
@@ -15,1174 +15,1100 @@
             --dark-bg: #0a0a20;
             --darker-bg: #050510;
             --light-text: #ffffff;
-            --dark-text: #333333;
-            --success: #4CAF50;
-            --warning: #FFC107;
-            --danger: #FF5252;
-        }
-        
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            -webkit-tap-highlight-color: transparent;
+            --neon-glow: 0 0 10px rgba(0, 200, 255, 0.7);
+            --neon-glow-accent: 0 0 15px rgba(255, 100, 0, 0.8);
         }
         
         body {
+            font-family: 'Arial', sans-serif;
             background-color: var(--dark-bg);
             color: var(--light-text);
-            overflow-x: hidden;
-            touch-action: manipulation;
-            min-height: 100vh;
-            position: relative;
-        }
-        
-        #app {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 15px;
-            position: relative;
-        }
-        
-        /* Header */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        
-        .resource-display {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: var(--energy);
-        }
-        
-        .meta-display {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .meta-item {
-            font-size: 0.9rem;
-            color: var(--secondary);
-        }
-        
-        /* Main Game Area */
-        .game-area {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
-        }
-        
-        @media (min-width: 768px) {
-            .game-area {
-                grid-template-columns: 1fr 300px;
-            }
-        }
-        
-        /* Clicker */
-        .clicker-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px 0;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(0, 100, 255, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 80% 70%, rgba(255, 100, 0, 0.1) 0%, transparent 20%);
         }
         
         #clicker {
-            width: 180px;
-            height: 180px;
+            width: 200px;
+            height: 200px;
             background: radial-gradient(circle, var(--primary), var(--secondary));
             border-radius: 50%;
-            cursor: pointer;
-            border: 3px solid white;
+            margin: 20px auto;
             display: flex;
             justify-content: center;
             align-items: center;
             font-size: 24px;
             font-weight: bold;
-            box-shadow: 0 0 30px rgba(0, 100, 255, 0.7);
-            transition: transform 0.1s;
-            position: relative;
-            z-index: 10;
+            cursor: pointer;
             user-select: none;
-            touch-action: manipulation;
+            border: 3px solid rgba(255, 255, 255, 0.8);
+            box-shadow: var(--neon-glow), inset 0 0 20px rgba(255, 255, 255, 0.3);
+            transition: transform 0.1s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
         }
         
-        @media (max-width: 480px) {
-            #clicker {
-                width: 140px;
-                height: 140px;
-                font-size: 20px;
-            }
+        #clicker::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(
+                transparent, 
+                rgba(0, 200, 255, 0.5), 
+                transparent
+            );
+            animation: rotate 4s linear infinite;
+            opacity: 0.7;
+        }
+        
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         
         #clicker:active {
             transform: scale(0.95);
+            box-shadow: 0 0 5px rgba(0, 100, 255, 0.7);
         }
         
-        .click-value {
-            pointer-events: none;
-            font-size: 1.5rem;
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
-        }
-        
-        .clicker-stats {
-            margin-top: 15px;
-            text-align: center;
-        }
-        
-        .stat-item {
-            margin: 5px 0;
-            font-size: 0.9rem;
-        }
-        
-        /* Shop */
-        .shop {
-            background-color: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            padding: 15px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        
-        .shop-tabs {
-            display: flex;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            margin-bottom: 15px;
-        }
-        
-        .shop-tab {
-            padding: 8px 15px;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s;
-        }
-        
-        .shop-tab.active {
-            border-bottom: 2px solid var(--primary);
-            color: var(--primary);
-        }
-        
-        .upgrade-item {
+        .resource {
+            font-size: 20px;
             margin: 10px 0;
-            padding: 12px;
-            background-color: rgba(50, 50, 100, 0.3);
-            border-radius: 8px;
-            transition: all 0.2s;
-            border-left: 3px solid transparent;
-            position: relative;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
         }
         
-        .upgrade-item:hover {
-            background-color: rgba(70, 70, 120, 0.5);
-        }
-        
-        .upgrade-item.disabled {
-            background-color: rgba(50, 50, 50, 0.3);
-            color: #777;
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
-        
-        .upgrade-item.owned {
-            border-left: 3px solid var(--success);
-            background-color: rgba(0, 100, 0, 0.2);
-        }
-        
-        .upgrade-item.locked {
-            border-left: 3px solid var(--warning);
-        }
-        
-        .upgrade-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-        }
-        
-        .upgrade-name {
+        .resource-value {
             font-weight: bold;
             color: var(--secondary);
         }
         
-        .upgrade-cost {
-            font-weight: bold;
-            color: var(--energy);
-        }
-        
-        .upgrade-description {
-            font-size: 0.85rem;
-            color: #ccc;
-            margin-bottom: 5px;
-        }
-        
-        .upgrade-requirements {
-            font-size: 0.75rem;
-            color: var(--warning);
-            margin-top: 5px;
-        }
-        
-        /* Rebirth Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s;
-        }
-        
-        .modal-overlay.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-        
-        .modal {
-            background-color: var(--darker-bg);
-            border-radius: 10px;
-            padding: 20px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-        }
-        
-        .modal-title {
-            font-size: 1.5rem;
-            margin-bottom: 15px;
-            color: var(--rebirth);
-            text-align: center;
-        }
-        
-        .modal-content {
-            margin-bottom: 20px;
-        }
-        
-        .rebirth-option {
+        .upgrade {
+            border: 1px solid rgba(0, 200, 255, 0.3);
             padding: 15px;
-            margin: 10px 0;
-            background-color: rgba(255, 51, 102, 0.1);
+            margin: 10px auto;
+            max-width: 300px;
             border-radius: 8px;
-            border: 1px solid var(--rebirth);
             cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .rebirth-option:hover {
-            background-color: rgba(255, 51, 102, 0.2);
-        }
-        
-        .rebirth-option.selected {
-            background-color: rgba(255, 51, 102, 0.3);
-            box-shadow: 0 0 0 2px var(--rebirth);
-        }
-        
-        .rebirth-option-title {
-            font-weight: bold;
-            color: var(--rebirth);
-            margin-bottom: 5px;
-        }
-        
-        .rebirth-option-desc {
-            font-size: 0.9rem;
-            color: #ccc;
-        }
-        
-        .modal-actions {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-        }
-        
-        .btn {
-            padding: 10px 20px;
-            border-radius: 5px;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .btn-primary {
-            background-color: var(--primary);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background-color: #0055cc;
-        }
-        
-        .btn-danger {
-            background-color: var(--rebirth);
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background-color: #cc2255;
-        }
-        
-        .btn-warning {
-            background-color: var(--warning);
-            color: var(--dark-text);
-        }
-        
-        .btn-warning:hover {
-            background-color: #e0a800;
-        }
-        
-        /* Mobile Controls */
-        .mobile-controls {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            left: 0;
-            right: 0;
-            justify-content: center;
-            gap: 10px;
-            padding: 0 15px;
-            z-index: 50;
-        }
-        
-        @media (max-width: 768px) {
-            .mobile-controls {
-                display: flex;
-            }
-        }
-        
-        .mobile-btn {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background-color: rgba(0, 102, 255, 0.7);
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.5rem;
-            cursor: pointer;
-            user-select: none;
-            touch-action: manipulation;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-        }
-        
-        /* Particles */
-        .particle {
-            position: absolute;
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 5;
-        }
-        
-        /* Notifications */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background-color: rgba(0, 100, 0, 0.8);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 5px;
-            z-index: 100;
-            transform: translateX(200%);
-            transition: transform 0.3s;
-        }
-        
-        .notification.show {
-            transform: translateX(0);
-        }
-        
-        .notification.error {
-            background-color: rgba(255, 82, 82, 0.8);
-        }
-        
-        /* Progress bars */
-        .progress-container {
-            width: 100%;
-            height: 5px;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-            margin-top: 5px;
+            background-color: rgba(0, 20, 40, 0.5);
+            transition: all 0.3s;
+            position: relative;
             overflow: hidden;
         }
         
-        .progress-bar {
-            height: 100%;
-            background-color: var(--accent);
-            width: 0%;
-            transition: width 0.3s;
+        .upgrade::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+        }
+        
+        .upgrade:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--neon-glow);
+            background-color: rgba(0, 40, 80, 0.5);
+        }
+        
+        .upgrade.unlocked {
+            background-color: rgba(0, 100, 0, 0.2);
+            border-left: 3px solid var(--primary);
+        }
+        
+        .upgrade.locked {
+            opacity: 0.6;
+            border-left: 3px solid orange;
+        }
+        
+        .upgrade.unlocked:hover {
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+        }
+        
+        button {
+            background: linear-gradient(to bottom, var(--primary), #0044aa);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            margin: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: linear-gradient(45deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.2), 
+                transparent);
+            transform: rotate(45deg);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.4);
+        }
+        
+        button:hover::before {
+            opacity: 1;
+        }
+        
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: linear-gradient(to bottom, #555, #333);
+            transform: none;
+            box-shadow: none;
+        }
+        
+        button:disabled:hover::before {
+            opacity: 0;
+        }
+        
+        #shop {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            max-width: 600px;
+            margin: 20px auto;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            background-color: rgba(0, 20, 40, 0.7);
+            border-radius: 6px;
+            margin: 0 5px;
+            transition: all 0.3s;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .tab:hover {
+            background-color: rgba(0, 50, 100, 0.7);
+            transform: translateY(-2px);
+        }
+        
+        .tab.active {
+            background: linear-gradient(to bottom, var(--primary), #0044aa);
+            box-shadow: var(--neon-glow);
+        }
+        
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .advancements-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: rgba(0, 20, 40, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .advancement {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: rgba(0, 40, 80, 0.3);
+            border-radius: 6px;
+            border-left: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .advancement.unlocked {
+            border-left: 3px solid var(--primary);
+            background-color: rgba(0, 100, 0, 0.2);
+        }
+        
+        .advancement-icon {
+            width: 40px;
+            height: 40px;
+            background-color: rgba(0, 100, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 15px;
+            font-size: 20px;
+        }
+        
+        .advancement-info {
+            flex: 1;
+            text-align: left;
+        }
+        
+        .advancement-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .advancement-description {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .advancement-reward {
+            font-size: 12px;
+            color: var(--secondary);
+            margin-top: 5px;
+        }
+        
+        .section-title {
+            font-size: 24px;
+            margin: 20px 0;
+            color: var(--secondary);
+            text-shadow: 0 0 10px rgba(0, 200, 255, 0.5);
+            position: relative;
+            display: inline-block;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* Animation for resource gain */
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-30px); opacity: 0; }
+        }
+        
+        .float-text {
+            position: absolute;
+            color: var(--secondary);
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 1s forwards;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+        }
+        
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary);
+        }
+        
+        /* Responsive design */
+        @media (max-width: 600px) {
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                margin: 5px 0;
+            }
+            
+            #clicker {
+                width: 150px;
+                height: 150px;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="app">
-        <div class="header">
-            <div class="resource-display">
-                Cosmic Energy: <span id="resources">0</span>
-            </div>
-            <div class="meta-display">
-                <div class="meta-item">Prestige: <span id="prestige-level">0</span></div>
-                <div class="meta-item">Rebirth: <span id="rebirth-level">0</span></div>
-            </div>
-            <button id="reset-btn" class="btn btn-warning">Reset Game</button>
-        </div>
-        
-        <div class="game-area">
-            <div class="clicker-container">
-                <div id="clicker">
-                    <div class="click-value">+1</div>
-                </div>
-                
-                <div class="clicker-stats">
-                    <div class="stat-item">Click Power: <span id="click-power">1</span></div>
-                    <div class="stat-item">Auto-Clickers: <span id="auto-clickers">0</span></div>
-                    <div class="stat-item">Auto Rate: <span id="auto-rate">0</span>/sec</div>
-                </div>
-                
-                <div class="modal-actions" style="margin-top: 20px;">
-                    <button id="prestige-btn" class="btn btn-primary">Prestige</button>
-                    <button id="rebirth-btn" class="btn btn-danger">Rebirth</button>
-                </div>
-            </div>
-            
-            <div class="shop">
-                <div class="shop-tabs">
-                    <div class="shop-tab active" data-tab="click">Click</div>
-                    <div class="shop-tab" data-tab="auto">Auto</div>
-                    <div class="shop-tab" data-tab="prestige">Prestige</div>
-                    <div class="shop-tab" data-tab="rebirth">Rebirth</div>
-                </div>
-                
-                <div id="click-upgrades" class="upgrade-tab">
-                    <!-- Click upgrades will be inserted here -->
-                </div>
-                
-                <div id="auto-upgrades" class="upgrade-tab" style="display: none;">
-                    <!-- Auto upgrades will be inserted here -->
-                </div>
-                
-                <div id="prestige-upgrades" class="upgrade-tab" style="display: none;">
-                    <!-- Prestige upgrades will be inserted here -->
-                </div>
-                
-                <div id="rebirth-upgrades" class="upgrade-tab" style="display: none;">
-                    <!-- Rebirth upgrades will be inserted here -->
-                </div>
-            </div>
-        </div>
+    <div class="resource">Cosmic Energy: <span id="resources" class="resource-value">0</span></div>
+    <div class="resource">Prestige: <span id="prestige" class="resource-value">0</span> | Rebirth: <span id="rebirth" class="resource-value">0</span></div>
+    
+    <div id="clicker-container">
+        <div id="clicker">+<span id="click-value">1</span></div>
     </div>
     
-    <div class="mobile-controls">
-        <div class="mobile-btn" id="mobile-click">👆</div>
-        <div class="mobile-btn" id="mobile-shop">🛒</div>
+    <div class="resource">Click Power: <span id="click-power" class="resource-value">1</span></div>
+    <div class="resource">Auto-Clickers: <span id="auto-clickers" class="resource-value">0</span> (<span id="auto-rate" class="resource-value">0</span>/sec)</div>
+    
+    <div>
+        <button id="prestige-btn">Prestige</button>
+        <button id="rebirth-btn">Rebirth</button>
+        <button id="reset-btn">Reset Game</button>
     </div>
     
-    <div class="modal-overlay" id="rebirth-modal">
-        <div class="modal">
-            <div class="modal-title">Rebirth Options</div>
-            <div class="modal-content">
-                <p>Choose one permanent upgrade for your next rebirth:</p>
-                
-                <div class="rebirth-option" data-upgrade="click-power">
-                    <div class="rebirth-option-title">2x Click Power</div>
-                    <div class="rebirth-option-desc">All clicks are twice as powerful</div>
-                </div>
-                
-                <div class="rebirth-option" data-upgrade="auto-speed">
-                    <div class="rebirth-option-title">2x Auto-Click Speed</div>
-                    <div class="rebirth-option-desc">Auto-clickers work twice as fast</div>
-                </div>
-                
-                <div class="rebirth-option" data-upgrade="energy-gain">
-                    <div class="rebirth-option-title">2x Energy Gain</div>
-                    <div class="rebirth-option-desc">Earn twice as much energy from all sources</div>
-                </div>
-                
-                <div class="rebirth-option" data-upgrade="upgrade-cost">
-                    <div class="rebirth-option-title">50% Upgrade Discount</div>
-                    <div class="rebirth-option-desc">All upgrades cost half as much</div>
-                </div>
-            </div>
-            <div class="modal-actions">
-                <button id="confirm-rebirth" class="btn btn-danger">Confirm Rebirth</button>
-                <button id="cancel-rebirth" class="btn btn-primary">Cancel</button>
-            </div>
+    <div class="tabs">
+        <div class="tab active" data-tab="click">Click</div>
+        <div class="tab" data-tab="auto">Auto</div>
+        <div class="tab" data-tab="prestige">Prestige</div>
+        <div class="tab" data-tab="rebirth">Rebirth</div>
+        <div class="tab" data-tab="advancements">Advancements</div>
+    </div>
+    
+    <div id="shop">
+        <!-- Upgrades will be added here by JavaScript -->
+    </div>
+    
+    <div id="advancements-container" class="advancements-container hidden">
+        <div class="section-title">Advancements</div>
+        <div id="advancements-list">
+            <!-- Advancements will be added here by JavaScript -->
         </div>
-    </div>
-    
-    <div class="notification" id="notification">
-        <div id="notification-message"></div>
     </div>
 
     <script>
-        // =============================================
-        // Game State
-        // =============================================
+        // Game state
         const game = {
-            // Core resources
             resources: 0,
             totalResources: 0,
             clicks: 0,
-            
-            // Click mechanics
+            clickPower: 1,
             baseClickPower: 1,
-            clickMultiplier: 1,
-            
-            // Auto-clicker mechanics
             autoClickers: 0,
             autoClickerCost: 15,
             autoClickMultiplier: 1,
-            
-            // Prestige system
             prestigeLevel: 0,
             prestigeBonus: 1,
-            nextPrestigeAt: 100000,
-            
-            // Rebirth system
             rebirthLevel: 0,
             rebirthBonus: 1,
-            nextRebirthAt: 1000000,
             rebirthUpgrades: [],
-            selectedRebirthUpgrade: null,
-            
-            // Upgrades
             upgrades: {
                 click: [],
                 auto: [],
                 prestige: [],
                 rebirth: []
             },
-            
-            // Game state
-            startTime: Date.now(),
-            playTime: 0,
+            advancements: [],
+            unlockedAdvancements: [],
             lastUpdate: Date.now(),
             lastAutoClick: Date.now(),
-            particles: [],
-            notifications: []
+            startTime: Date.now(),
+            playTime: 0,
+            hasGivenFirstAutoClicker: false // Track if we've given the first auto-clicker
         };
 
-        // =============================================
-        // DOM Elements
-        // =============================================
+        // DOM elements
         const elements = {
-            // Core elements
-            clicker: document.getElementById('clicker'),
-            clickValue: document.querySelector('.click-value'),
-            
-            // Resource displays
             resources: document.getElementById('resources'),
+            clicker: document.getElementById('clicker'),
+            clickerContainer: document.getElementById('clicker-container'),
+            clickValue: document.getElementById('click-value'),
             clickPower: document.getElementById('click-power'),
             autoClickers: document.getElementById('auto-clickers'),
             autoRate: document.getElementById('auto-rate'),
-            prestigeLevel: document.getElementById('prestige-level'),
-            rebirthLevel: document.getElementById('rebirth-level'),
-            
-            // Buttons
+            prestige: document.getElementById('prestige'),
+            rebirth: document.getElementById('rebirth'),
             prestigeBtn: document.getElementById('prestige-btn'),
             rebirthBtn: document.getElementById('rebirth-btn'),
             resetBtn: document.getElementById('reset-btn'),
-            
-            // Shop elements
-            shopTabs: document.querySelectorAll('.shop-tab'),
-            clickUpgrades: document.getElementById('click-upgrades'),
-            autoUpgrades: document.getElementById('auto-upgrades'),
-            prestigeUpgrades: document.getElementById('prestige-upgrades'),
-            rebirthUpgrades: document.getElementById('rebirth-upgrades'),
-            
-            // Mobile controls
-            mobileClick: document.getElementById('mobile-click'),
-            mobileShop: document.getElementById('mobile-shop'),
-            
-            // Rebirth modal
-            rebirthModal: document.getElementById('rebirth-modal'),
-            confirmRebirth: document.getElementById('confirm-rebirth'),
-            cancelRebirth: document.getElementById('cancel-rebirth'),
-            rebirthOptions: document.querySelectorAll('.rebirth-option'),
-            
-            // Notification
-            notification: document.getElementById('notification'),
-            notificationMessage: document.getElementById('notification-message')
+            shop: document.getElementById('shop'),
+            tabs: document.querySelectorAll('.tab'),
+            advancementsContainer: document.getElementById('advancements-container'),
+            advancementsList: document.getElementById('advancements-list')
         };
 
-        // =============================================
-        // Upgrade Definitions
-        // =============================================
-        
-        // Click Upgrades - With progression requirements
-        for (let i = 1; i <= 20; i++) {
-            const cost = Math.floor(50 * Math.pow(1.8, i));
-            const power = 1 + Math.floor(i / 5);
+        // Initialize upgrades
+        function initUpgrades() {
+            // Clear any existing upgrades
+            game.upgrades.click = [];
+            game.upgrades.auto = [];
+            game.upgrades.prestige = [];
+            game.upgrades.rebirth = [];
             
+            // Click upgrades - now with 50 levels
+            for (let i = 1; i <= 50; i++) {
+                let powerIncrease, costBase, costExp;
+                
+                if (i <= 10) {
+                    powerIncrease = 1;
+                    costBase = 50;
+                    costExp = 1.8;
+                } else if (i <= 20) {
+                    powerIncrease = 2;
+                    costBase = 500;
+                    costExp = 1.85;
+                } else if (i <= 30) {
+                    powerIncrease = 5;
+                    costBase = 5000;
+                    costExp = 1.9;
+                } else if (i <= 40) {
+                    powerIncrease = 10;
+                    costBase = 50000;
+                    costExp = 1.95;
+                } else {
+                    powerIncrease = 25;
+                    costBase = 500000;
+                    costExp = 2.0;
+                }
+                
+                game.upgrades.click.push({
+                    id: `click_${i}`,
+                    name: `Quantum Click ${i}`,
+                    description: `+${powerIncrease} base click power`,
+                    cost: Math.floor(costBase * Math.pow(costExp, i % 10 || 10)),
+                    purchased: false,
+                    effect: () => { game.baseClickPower += powerIncrease; },
+                    requires: i > 1 ? [`click_${i-1}`] : [],
+                    icon: '⚡',
+                    tier: Math.floor((i-1)/10) + 1
+                });
+            }
+
+            // Auto upgrades - 50 levels
+            for (let i = 1; i <= 50; i++) {
+                let multiplierIncrease, costBase, costExp;
+                
+                if (i <= 10) {
+                    multiplierIncrease = 0.5;
+                    costBase = 100;
+                    costExp = 1.9;
+                } else if (i <= 20) {
+                    multiplierIncrease = 0.75;
+                    costBase = 1000;
+                    costExp = 1.95;
+                } else if (i <= 30) {
+                    multiplierIncrease = 1.0;
+                    costBase = 10000;
+                    costExp = 2.0;
+                } else if (i <= 40) {
+                    multiplierIncrease = 1.5;
+                    costBase = 100000;
+                    costExp = 2.05;
+                } else {
+                    multiplierIncrease = 2.0;
+                    costBase = 1000000;
+                    costExp = 2.1;
+                }
+                
+                game.upgrades.auto.push({
+                    id: `auto_${i}`,
+                    name: `Nano-Bots ${i}`,
+                    description: `+${multiplierIncrease}x auto-clicker efficiency`,
+                    cost: Math.floor(costBase * Math.pow(costExp, i % 10 || 10)),
+                    purchased: false,
+                    effect: () => { game.autoClickMultiplier += multiplierIncrease; },
+                    requires: i > 1 ? [`auto_${i-1}`] : [],
+                    icon: '🤖',
+                    tier: Math.floor((i-1)/10) + 1
+                });
+            }
+
+            // Prestige upgrades - 20 levels
+            for (let i = 1; i <= 20; i++) {
+                game.upgrades.prestige.push({
+                    id: `prestige_${i}`,
+                    name: `Prestige Core ${i}`,
+                    description: `+${i*0.15}x prestige bonus (total: ${(1 + i*0.15).toFixed(2)}x)`,
+                    cost: i,
+                    purchased: false,
+                    effect: () => { game.prestigeBonus += 0.15; },
+                    requiresPrestige: true,
+                    icon: '✨',
+                    tier: Math.floor((i-1)/5) + 1
+                });
+            }
+
+            // Rebirth upgrades - 20 levels
+            for (let i = 1; i <= 20; i++) {
+                game.upgrades.rebirth.push({
+                    id: `rebirth_${i}`,
+                    name: `Rebirth Matrix ${i}`,
+                    description: `+${i*0.25}x rebirth bonus (total: ${(1 + i*0.25).toFixed(2)}x)`,
+                    cost: i,
+                    purchased: false,
+                    effect: () => { game.rebirthBonus += 0.25; },
+                    requiresRebirth: true,
+                    icon: '🌀',
+                    tier: Math.floor((i-1)/5) + 1
+                });
+            }
+            
+            // Multiplicative upgrades - 10 levels each
+            for (let i = 1; i <= 10; i++) {
+                game.upgrades.click.push({
+                    id: `click_multi_${i}`,
+                    name: `Quantum Multiplier ${i}`,
+                    description: `2x all click power`,
+                    cost: Math.floor(5000 * Math.pow(5, i)),
+                    purchased: false,
+                    effect: () => { game.baseClickPower *= 2; },
+                    requires: i > 1 ? [`click_multi_${i-1}`] : ['click_10', 'click_20', 'click_30', 'click_40', 'click_50'].slice(0, i),
+                    icon: '✖️',
+                    tier: i
+                });
+            }
+            
+            for (let i = 1; i <= 10; i++) {
+                game.upgrades.auto.push({
+                    id: `auto_multi_${i}`,
+                    name: `Auto Multiplier ${i}`,
+                    description: `2x all auto-clickers`,
+                    cost: Math.floor(10000 * Math.pow(5, i)),
+                    purchased: false,
+                    effect: () => { game.autoClickers *= 2; },
+                    requires: i > 1 ? [`auto_multi_${i-1}`] : ['auto_10', 'auto_20', 'auto_30', 'auto_40', 'auto_50'].slice(0, i),
+                    icon: '🔄',
+                    tier: i
+                });
+            }
+            
+            // Special upgrades
             game.upgrades.click.push({
-                id: `click_${i}`,
-                name: `Click Power ${i}`,
-                description: `Increases click power by ${power}`,
-                cost: cost,
+                id: 'click_special_1',
+                name: 'Singularity Click',
+                description: '10x all click power',
+                cost: 1e9,
                 purchased: false,
-                effect: () => { game.baseClickPower += power; },
-                requires: i > 1 ? [`click_${i-1}`] : []
+                effect: () => { game.baseClickPower *= 10; },
+                requires: ['click_multi_5', 'click_50'],
+                icon: '🕳️',
+                tier: 6
             });
-        }
-        
-        // Auto Clicker Upgrades - With progression requirements
-        for (let i = 1; i <= 20; i++) {
-            const cost = Math.floor(100 * Math.pow(1.9, i));
-            const multiplier = 1 + (i * 0.08);
             
             game.upgrades.auto.push({
-                id: `auto_${i}`,
-                name: `Auto-Clicker Boost ${i}`,
-                description: `Multiplies auto-clicker efficiency by ${multiplier.toFixed(2)}x`,
-                cost: cost,
+                id: 'auto_special_1',
+                name: 'Singularity Automation',
+                description: '10x all auto-clickers',
+                cost: 5e9,
                 purchased: false,
-                effect: () => { game.autoClickMultiplier *= multiplier; },
-                requires: i > 1 ? [`auto_${i-1}`] : []
+                effect: () => { game.autoClickers *= 10; },
+                requires: ['auto_multi_5', 'auto_50'],
+                icon: '🌌',
+                tier: 6
             });
         }
         
-        // Prestige Upgrades - Only available after prestiging
-        for (let i = 1; i <= 10; i++) {
-            const cost = Math.floor(5 * Math.pow(2, i));
-            const bonus = 1 + (i * 0.1);
+        // Initialize advancements
+        function initAdvancements() {
+            game.advancements = [
+                {
+                    id: 'first_click',
+                    name: 'First Contact',
+                    description: 'Perform your first click',
+                    condition: () => game.clicks >= 1,
+                    reward: '+1 base click power',
+                    unlocked: false,
+                    effect: () => { game.baseClickPower += 1; },
+                    icon: '👆'
+                },
+                {
+                    id: 'hundred_clicks',
+                    name: 'Click Centurion',
+                    description: 'Perform 100 clicks',
+                    condition: () => game.clicks >= 100,
+                    reward: '+5 base click power',
+                    unlocked: false,
+                    effect: () => { game.baseClickPower += 5; },
+                    icon: '💯'
+                },
+                {
+                    id: 'thousand_clicks',
+                    name: 'Millennium Clicker',
+                    description: 'Perform 1,000 clicks',
+                    condition: () => game.clicks >= 1000,
+                    reward: '+10 base click power',
+                    unlocked: false,
+                    effect: () => { game.baseClickPower += 10; },
+                    icon: '👑'
+                },
+                {
+                    id: 'first_energy',
+                    name: 'Energy Harvester',
+                    description: 'Collect 100 energy',
+                    condition: () => game.totalResources >= 100,
+                    reward: 'Auto-clickers are 10% more efficient',
+                    unlocked: false,
+                    effect: () => { game.autoClickMultiplier *= 1.1; },
+                    icon: '⚡'
+                },
+                {
+                    id: 'thousand_energy',
+                    name: 'Energy Magnate',
+                    description: 'Collect 1,000 energy',
+                    condition: () => game.totalResources >= 1000,
+                    reward: 'Unlocks first auto-clicker (once)',
+                    unlocked: false,
+                    effect: () => { 
+                        if (!game.hasGivenFirstAutoClicker) {
+                            game.autoClickers += 1;
+                            game.hasGivenFirstAutoClicker = true;
+                        }
+                    },
+                    icon: '💰'
+                },
+                {
+                    id: 'million_energy',
+                    name: 'Energy Tycoon',
+                    description: 'Collect 1,000,000 energy',
+                    condition: () => game.totalResources >= 1000000,
+                    reward: 'All click power x2',
+                    unlocked: false,
+                    effect: () => { game.baseClickPower *= 2; },
+                    icon: '🏦'
+                },
+                {
+                    id: 'first_auto',
+                    name: 'Automation',
+                    description: 'Purchase your first auto-clicker',
+                    condition: () => game.autoClickers >= 1,
+                    reward: 'Auto-clicker cost growth reduced by 5%',
+                    unlocked: false,
+                    effect: () => { game.autoClickerCost *= 0.95; },
+                    icon: '🤖'
+                },
+                {
+                    id: 'ten_auto',
+                    name: 'Factory',
+                    description: 'Purchase 10 auto-clickers',
+                    condition: () => game.autoClickers >= 10,
+                    reward: 'Auto-clickers produce 50% more',
+                    unlocked: false,
+                    effect: () => { game.autoClickMultiplier *= 1.5; },
+                    icon: '🏭'
+                },
+                {
+                    id: 'first_prestige',
+                    name: 'Ascension',
+                    description: 'Perform your first prestige',
+                    condition: () => game.prestigeLevel >= 1,
+                    reward: 'Prestige bonus increased by 0.1x',
+                    unlocked: false,
+                    effect: () => { game.prestigeBonus += 0.1; },
+                    icon: '✨'
+                },
+                {
+                    id: 'first_rebirth',
+                    name: 'Cosmic Rebirth',
+                    description: 'Perform your first rebirth',
+                    condition: () => game.rebirthLevel >= 1,
+                    reward: 'Rebirth bonus increased by 0.2x',
+                    unlocked: false,
+                    effect: () => { game.rebirthBonus += 0.2; },
+                    icon: '🌀'
+                },
+                {
+                    id: 'all_click_upgrades',
+                    name: 'Click Master',
+                    description: 'Purchase all click upgrades',
+                    condition: () => game.upgrades.click.every(u => u.purchased || u.requiresPrestige || u.requiresRebirth),
+                    reward: 'Click power x3',
+                    unlocked: false,
+                    effect: () => { game.baseClickPower *= 3; },
+                    icon: '👊'
+                },
+                {
+                    id: 'all_auto_upgrades',
+                    name: 'Automation Overlord',
+                    description: 'Purchase all auto-clicker upgrades',
+                    condition: () => game.upgrades.auto.every(u => u.purchased || u.requiresPrestige || u.requiresRebirth),
+                    reward: 'Auto-clickers x5',
+                    unlocked: false,
+                    effect: () => { game.autoClickers *= 5; },
+                    icon: '👾'
+                },
+                {
+                    id: 'tier5_click',
+                    name: 'Quantum Mastery',
+                    description: 'Purchase 50 click upgrades',
+                    condition: () => game.upgrades.click.filter(u => u.purchased && !u.requiresPrestige && !u.requiresRebirth).length >= 50,
+                    reward: 'Click power x5',
+                    unlocked: false,
+                    effect: () => { game.baseClickPower *= 5; },
+                    icon: '🔮'
+                },
+                {
+                    id: 'tier5_auto',
+                    name: 'Automation Singularity',
+                    description: 'Purchase 50 auto-clicker upgrades',
+                    condition: () => game.upgrades.auto.filter(u => u.purchased && !u.requiresPrestige && !u.requiresRebirth).length >= 50,
+                    reward: 'Auto-clickers x10',
+                    unlocked: false,
+                    effect: () => { game.autoClickers *= 10; },
+                    icon: '⚙️'
+                },
+                {
+                    id: 'max_prestige',
+                    name: 'Prestige Omnipotence',
+                    description: 'Purchase all prestige upgrades',
+                    condition: () => game.upgrades.prestige.every(u => u.purchased),
+                    reward: 'Prestige bonus x2',
+                    unlocked: false,
+                    effect: () => { game.prestigeBonus *= 2; },
+                    icon: '🌟'
+                },
+                {
+                    id: 'max_rebirth',
+                    name: 'Rebirth Transcendence',
+                    description: 'Purchase all rebirth upgrades',
+                    condition: () => game.upgrades.rebirth.every(u => u.purchased),
+                    reward: 'Rebirth bonus x2',
+                    unlocked: false,
+                    effect: () => { game.rebirthBonus *= 2; },
+                    icon: '💫'
+                }
+            ];
             
-            game.upgrades.prestige.push({
-                id: `prestige_${i}`,
-                name: `Prestige Boost ${i}`,
-                description: `Increases prestige bonus by ${bonus.toFixed(2)}x`,
-                cost: cost,
-                purchased: false,
-                effect: () => { game.prestigeBonus += 0.1; },
-                requiresPrestige: true
-            });
-        }
-        
-        // Rebirth Upgrades - Only available after rebirth
-        for (let i = 1; i <= 10; i++) {
-            const cost = Math.floor(10 * Math.pow(2.5, i));
-            const bonus = 1 + (i * 0.15);
-            
-            game.upgrades.rebirth.push({
-                id: `rebirth_${i}`,
-                name: `Rebirth Boost ${i}`,
-                description: `Increases rebirth bonus by ${bonus.toFixed(2)}x`,
-                cost: cost,
-                purchased: false,
-                effect: () => { game.rebirthBonus += 0.15; },
-                requiresRebirth: true
-            });
+            game.unlockedAdvancements = [];
         }
 
-        // =============================================
-        // Game Initialization
-        // =============================================
-        function init() {
-            // Load game first
-            loadGame();
+        // Check for new advancements
+        function checkAdvancements() {
+            let newAdvancements = false;
             
-            // Then setup everything else
-            setupEventListeners();
-            generateUpgradeElements();
-            
-            // Start game loop
-            gameLoop();
-            
-            // Setup auto-save
-            setInterval(saveGame, 30000);
-            window.addEventListener('beforeunload', saveGame);
-            
-            showNotification("Game loaded!");
-        }
-
-        function setupEventListeners() {
-            // Clicker
-            elements.clicker.addEventListener('click', handleClick);
-            elements.mobileClick.addEventListener('click', handleClick);
-            
-            // Shop tabs
-            elements.shopTabs.forEach(tab => {
-                tab.addEventListener('click', () => switchShopTab(tab.dataset.tab));
-            });
-            
-            // Mobile shop toggle
-            elements.mobileShop.addEventListener('click', () => {
-                document.querySelector('.shop').scrollIntoView({ behavior: 'smooth' });
-            });
-            
-            // Prestige/Rebirth buttons
-            elements.prestigeBtn.addEventListener('click', performPrestige);
-            elements.rebirthBtn.addEventListener('click', () => {
-                if (game.resources >= game.nextRebirthAt) {
-                    elements.rebirthModal.classList.add('active');
-                } else {
-                    showNotification(`You need ${formatNumber(game.nextRebirthAt)} energy to rebirth!`, true);
+            game.advancements.forEach(advancement => {
+                if (!advancement.unlocked && advancement.condition()) {
+                    advancement.unlocked = true;
+                    game.unlockedAdvancements.push(advancement.id);
+                    if (advancement.effect) advancement.effect();
+                    newAdvancements = true;
+                    
+                    // Show notification
+                    showNotification(`Advancement Unlocked: ${advancement.name}`);
                 }
             });
             
-            // Rebirth modal
-            elements.rebirthOptions.forEach(option => {
-                option.addEventListener('click', () => {
-                    elements.rebirthOptions.forEach(opt => opt.classList.remove('selected'));
-                    option.classList.add('selected');
-                    game.selectedRebirthUpgrade = option.dataset.upgrade;
+            if (newAdvancements) {
+                renderAdvancements();
+                saveGame();
+            }
+        }
+        
+        // Show notification
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'upgrade unlocked';
+            notification.style.position = 'fixed';
+            notification.style.top = '20px';
+            notification.style.left = '50%';
+            notification.style.transform = 'translateX(-50%)';
+            notification.style.zIndex = '1000';
+            notification.style.padding = '15px';
+            notification.style.borderRadius = '8px';
+            notification.style.boxShadow = '0 0 20px rgba(0, 200, 255, 0.7)';
+            notification.style.animation = 'fadeInOut 3s forwards';
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'fadeOut 0.5s forwards';
+                setTimeout(() => notification.remove(), 500);
+            }, 2500);
+        }
+
+        // Render advancements
+        function renderAdvancements() {
+            elements.advancementsList.innerHTML = '';
+            
+            game.advancements.forEach(advancement => {
+                const div = document.createElement('div');
+                div.className = `advancement ${advancement.unlocked ? 'unlocked' : ''}`;
+                
+                div.innerHTML = `
+                    <div class="advancement-icon">${advancement.icon}</div>
+                    <div class="advancement-info">
+                        <div class="advancement-name">${advancement.name}</div>
+                        <div class="advancement-description">${advancement.description}</div>
+                        ${advancement.unlocked ? `<div class="advancement-reward">Reward: ${advancement.reward}</div>` : ''}
+                    </div>
+                `;
+                
+                elements.advancementsList.appendChild(div);
+            });
+        }
+
+        // Render upgrades
+        function renderUpgrades(type) {
+            elements.shop.innerHTML = '';
+            
+            // Add auto-clicker purchase at the top if this is the auto tab
+            if (type === 'auto') {
+                const autoClickerBtn = document.createElement('div');
+                autoClickerBtn.className = 'upgrade';
+                autoClickerBtn.innerHTML = `
+                    <div><strong>Quantum Auto-Clicker</strong></div>
+                    <div>Generates energy automatically</div>
+                    <div>Cost: <span id="auto-cost">${formatNumber(game.autoClickerCost)}</span> energy</div>
+                    <div>Owned: ${game.autoClickers}</div>
+                `;
+                autoClickerBtn.addEventListener('click', () => {
+                    if (game.resources >= game.autoClickerCost) {
+                        game.resources -= game.autoClickerCost;
+                        game.autoClickers++;
+                        game.autoClickerCost = Math.floor(game.autoClickerCost * 1.15);
+                        updateUI();
+                        saveGame();
+                        checkAdvancements();
+                        
+                        // Show floating text
+                        showFloatText(autoClickerBtn, `-${formatNumber(game.autoClickerCost / 1.15)}`);
+                    }
                 });
+                elements.shop.appendChild(autoClickerBtn);
+            }
+            
+            // Sort upgrades by tier then by id
+            const sortedUpgrades = [...game.upgrades[type]].sort((a, b) => {
+                if (a.tier !== b.tier) return a.tier - b.tier;
+                return a.id.localeCompare(b.id);
             });
             
-            elements.confirmRebirth.addEventListener('click', performRebirth);
-            elements.cancelRebirth.addEventListener('click', () => {
-                elements.rebirthModal.classList.remove('active');
-                game.selectedRebirthUpgrade = null;
-            });
-            
-            // Reset button
-            elements.resetBtn.addEventListener('click', () => {
-                if (confirm("Are you sure you want to reset ALL game progress? This cannot be undone!")) {
-                    resetGame();
+            sortedUpgrades.forEach((upgrade, index) => {
+                const div = document.createElement('div');
+                div.className = 'upgrade';
+                
+                // Check requirements
+                let requirementsMet = true;
+                if (upgrade.requires && upgrade.requires.length > 0) {
+                    requirementsMet = upgrade.requires.every(req => {
+                        for (const category in game.upgrades) {
+                            const found = game.upgrades[category].find(u => u.id === req && u.purchased);
+                            if (found) return true;
+                        }
+                        return false;
+                    });
                 }
+                
+                if (upgrade.requiresPrestige && game.prestigeLevel < 1) {
+                    requirementsMet = false;
+                }
+                
+                if (upgrade.requiresRebirth && game.rebirthLevel < 1) {
+                    requirementsMet = false;
+                }
+                
+                if (upgrade.purchased) {
+                    div.classList.add('unlocked');
+                } else if (!requirementsMet) {
+                    div.classList.add('locked');
+                }
+                
+                // Different background for different tiers
+                const tierColors = [
+                    'rgba(0, 20, 40, 0.5)',
+                    'rgba(0, 30, 60, 0.5)',
+                    'rgba(0, 40, 80, 0.5)',
+                    'rgba(0, 50, 100, 0.5)',
+                    'rgba(0, 60, 120, 0.5)',
+                    'rgba(0, 70, 140, 0.5)'
+                ];
+                const tierColor = tierColors[Math.min(upgrade.tier - 1, tierColors.length - 1)] || tierColors[0];
+                div.style.backgroundColor = tierColor;
+                
+                div.innerHTML = `
+                    <div style="display: flex; align-items: center; margin-bottom: 5px;">
+                        <div style="font-size: 24px; margin-right: 10px;">${upgrade.icon || '✨'}</div>
+                        <div>
+                            <div><strong>${upgrade.name}</strong></div>
+                            <div>${upgrade.description}</div>
+                        </div>
+                    </div>
+                    <div>Cost: <span class="resource-value">${formatNumber(upgrade.cost)}</span> ${type === 'prestige' ? 'prestige' : type === 'rebirth' ? 'rebirth' : 'energy'}</div>
+                    ${!requirementsMet ? `<div style="margin-top: 5px; font-size: 14px; color: #ff9900;">Requires: ${upgrade.requires ? upgrade.requires.map(r => {
+                        for (const category in game.upgrades) {
+                            const u = game.upgrades[category].find(u => u.id === r);
+                            if (u) return u.name;
+                        }
+                        return r;
+                    }).join(', ') : upgrade.requiresPrestige ? '1 Prestige' : '1 Rebirth'}</div>` : ''}
+                    ${upgrade.tier > 1 ? `<div style="margin-top: 5px; font-size: 12px; color: var(--secondary);">Tier ${upgrade.tier}</div>` : ''}
+                `;
+                
+                if (!upgrade.purchased && requirementsMet) {
+                    div.addEventListener('click', () => buyUpgrade(type, upgrade.id));
+                }
+                
+                elements.shop.appendChild(div);
             });
+        }
+        
+        // Show floating text animation
+        function showFloatText(element, text) {
+            const rect = element.getBoundingClientRect();
+            const floatText = document.createElement('div');
+            floatText.className = 'float-text';
+            floatText.textContent = text;
+            floatText.style.left = `${rect.left + rect.width/2}px`;
+            floatText.style.top = `${rect.top}px`;
             
-            // Touch events for mobile
-            document.addEventListener('touchstart', handleTouch, { passive: false });
+            document.body.appendChild(floatText);
+            
+            setTimeout(() => {
+                floatText.remove();
+            }, 1000);
         }
 
-        // =============================================
-        // Game Loop
-        // =============================================
+        // Buy upgrade by ID
+        function buyUpgrade(type, upgradeId) {
+            const upgradeIndex = game.upgrades[type].findIndex(u => u.id === upgradeId);
+            if (upgradeIndex === -1) return;
+            
+            const upgrade = game.upgrades[type][upgradeIndex];
+            let canAfford = false;
+            
+            if (type === 'prestige') {
+                canAfford = game.prestigeLevel >= upgrade.cost;
+            } else if (type === 'rebirth') {
+                canAfford = game.rebirthLevel >= upgrade.cost;
+            } else {
+                canAfford = game.resources >= upgrade.cost;
+            }
+            
+            if (canAfford && !upgrade.purchased) {
+                if (type === 'prestige') {
+                    game.prestigeLevel -= upgrade.cost;
+                } else if (type === 'rebirth') {
+                    game.rebirthLevel -= upgrade.cost;
+                } else {
+                    game.resources -= upgrade.cost;
+                    
+                    // Show floating text
+                    const shopChildren = elements.shop.children;
+                    for (let i = 0; i < shopChildren.length; i++) {
+                        if (shopChildren[i].textContent.includes(upgrade.name)) {
+                            showFloatText(shopChildren[i], `-${formatNumber(upgrade.cost)}`);
+                            break;
+                        }
+                    }
+                }
+                
+                upgrade.purchased = true;
+                if (upgrade.effect) upgrade.effect();
+                renderUpgrades(type);
+                updateUI();
+                saveGame();
+                checkAdvancements();
+            }
+        }
+
+        // Update UI
+        function updateUI() {
+            // Calculate current click power
+            game.clickPower = Math.floor(game.baseClickPower * game.prestigeBonus * game.rebirthBonus);
+            
+            elements.resources.textContent = formatNumber(game.resources);
+            elements.clickValue.textContent = formatNumber(game.clickPower);
+            elements.clickPower.textContent = formatNumber(game.clickPower);
+            elements.autoClickers.textContent = formatNumber(game.autoClickers);
+            elements.autoRate.textContent = formatNumber(game.autoClickers * game.autoClickMultiplier * game.prestigeBonus * game.rebirthBonus);
+            elements.prestige.textContent = formatNumber(game.prestigeLevel);
+            elements.rebirth.textContent = formatNumber(game.rebirthLevel);
+            
+            // Update buttons
+            const prestigeCost = 100000 * Math.pow(2, game.prestigeLevel);
+            const rebirthCost = 1000000 * Math.pow(3, game.rebirthLevel);
+            
+            elements.prestigeBtn.disabled = game.resources < prestigeCost;
+            elements.rebirthBtn.disabled = game.resources < rebirthCost;
+            
+            elements.prestigeBtn.innerHTML = `Prestige<br><small>${formatNumber(prestigeCost)} energy</small>`;
+            elements.rebirthBtn.innerHTML = `Rebirth<br><small>${formatNumber(rebirthCost)} energy</small>`;
+            
+            // Update clicker appearance based on power
+            const powerLevel = Math.min(10, Math.floor(Math.log10(game.clickPower + 1)));
+            elements.clicker.style.boxShadow = `0 0 ${10 + powerLevel * 2}px rgba(0, ${100 + powerLevel * 15}, 255, 0.7)`;
+            elements.clicker.style.border = `${1 + powerLevel * 0.3}px solid rgba(255, 255, 255, ${0.5 + powerLevel * 0.05})`;
+        }
+
+        // Format numbers
+        function formatNumber(num) {
+            if (num >= 1e33) return (num / 1e33).toFixed(1) + ' Dec';
+            if (num >= 1e30) return (num / 1e30).toFixed(1) + ' Non';
+            if (num >= 1e27) return (num / 1e27).toFixed(1) + ' Oct';
+            if (num >= 1e24) return (num / 1e24).toFixed(1) + ' Sep';
+            if (num >= 1e21) return (num / 1e21).toFixed(1) + ' Sex';
+            if (num >= 1e18) return (num / 1e18).toFixed(1) + ' Quin';
+            if (num >= 1e15) return (num / 1e15).toFixed(1) + ' Quad';
+            if (num >= 1e12) return (num / 1e12).toFixed(1) + ' T';
+            if (num >= 1e9) return (num / 1e9).toFixed(1) + ' B';
+            if (num >= 1e6) return (num / 1e6).toFixed(1) + ' M';
+            if (num >= 1e3) return (num / 1e3).toFixed(1) + ' K';
+            return Math.floor(num);
+        }
+
+        // Game loop
         function gameLoop() {
             const now = Date.now();
             const deltaTime = (now - game.lastUpdate) / 1000;
             game.lastUpdate = now;
             
-            update(deltaTime);
-            render();
+            // Auto-clickers
+            if (now - game.lastAutoClick >= 1000 && game.autoClickers > 0) {
+                const gain = game.autoClickers * game.autoClickMultiplier * game.prestigeBonus * game.rebirthBonus;
+                game.resources += gain;
+                game.totalResources += gain;
+                game.lastAutoClick = now;
+                
+                // Show floating text on the clicker
+                if (Math.random() < 0.3) { // Only show sometimes to avoid spam
+                    const floatText = document.createElement('div');
+                    floatText.className = 'float-text';
+                    floatText.textContent = `+${formatNumber(gain)}`;
+                    floatText.style.left = `${elements.clickerContainer.offsetLeft + elements.clickerContainer.offsetWidth/2}px`;
+                    floatText.style.top = `${elements.clickerContainer.offsetTop}px`;
+                    
+                    document.body.appendChild(floatText);
+                    
+                    setTimeout(() => {
+                        floatText.remove();
+                    }, 1000);
+                }
+            }
             
+            checkAdvancements();
+            updateUI();
             requestAnimationFrame(gameLoop);
         }
 
-        function update(deltaTime) {
-            // Update play time
-            game.playTime += deltaTime;
-            
-            // Auto-clicker logic
-            if (now - game.lastAutoClick >= 1000 && game.autoClickers > 0) {
-                const autoGain = game.autoClickers * game.autoClickMultiplier * game.prestigeBonus * game.rebirthBonus;
-                game.resources += autoGain;
-                game.totalResources += autoGain;
-                game.lastAutoClick = now;
-                
-                createParticles(3);
-            }
-            
-            // Update particles
-            game.particles.forEach((particle, index) => {
-                particle.x += Math.cos(particle.angle) * particle.speed;
-                particle.y += Math.sin(particle.angle) * particle.speed;
-                particle.life--;
-                particle.size = Math.max(0, particle.size - 0.05);
-                
-                if (particle.life <= 0) {
-                    game.particles.splice(index, 1);
-                    if (particle.element.parentNode) {
-                        particle.element.parentNode.removeChild(particle.element);
-                    }
-                }
-            });
-            
-            // Update calculated values
-            game.clickPower = Math.floor(game.baseClickPower * game.clickMultiplier * game.prestigeBonus * game.rebirthBonus);
-            game.autoClickRate = Math.floor(game.autoClickers * game.autoClickMultiplier * game.prestigeBonus * game.rebirthBonus);
-            
-            // Update next prestige/rebirth costs
-            game.nextPrestigeAt = 100000 * Math.pow(2, game.prestigeLevel);
-            game.nextRebirthAt = 1000000 * Math.pow(3, game.rebirthLevel);
-        }
-
-        function render() {
-            // Update resource displays
-            elements.resources.textContent = formatNumber(game.resources);
-            elements.clickPower.textContent = formatNumber(game.clickPower);
-            elements.clickValue.textContent = `+${formatNumber(game.clickPower)}`;
-            elements.autoClickers.textContent = game.autoClickers;
-            elements.autoRate.textContent = formatNumber(game.autoClickRate);
-            elements.prestigeLevel.textContent = game.prestigeLevel;
-            elements.rebirthLevel.textContent = game.rebirthLevel;
-            
-            // Update shop items
-            updateShopItems();
-            
-            // Handle notifications
-            if (game.notifications.length > 0) {
-                showNotification(game.notifications[0].message, game.notifications[0].isError);
-                game.notifications.shift();
-            }
-            
-            // Render particles
-            game.particles.forEach(p => {
-                p.element.style.left = `${p.x}px`;
-                p.element.style.top = `${p.y}px`;
-                p.element.style.width = `${p.size}px`;
-                p.element.style.height = `${p.size}px`;
-                p.element.style.backgroundColor = p.color;
-                p.element.style.opacity = p.life / 100;
-            });
-        }
-
-        // =============================================
-        // Game Mechanics
-        // =============================================
-        function handleClick() {
-            game.resources += game.clickPower;
-            game.totalResources += game.clickPower;
-            game.clicks++;
-            
-            const rect = elements.clicker.getBoundingClientRect();
-            createParticles(5, rect.left + rect.width/2, rect.top + rect.height/2);
-            
-            elements.clicker.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                elements.clicker.style.transform = 'scale(1)';
-            }, 100);
-        }
-        
-        function handleTouch(e) {
-            if (e.target === elements.clicker || e.target === elements.mobileClick) {
-                e.preventDefault();
-                handleClick();
-            }
-        }
-
-        function buyAutoClicker() {
-            if (game.resources >= game.autoClickerCost) {
-                game.resources -= game.autoClickerCost;
-                game.autoClickers++;
-                game.autoClickerCost = Math.floor(game.autoClickerCost * 1.2);
-                showNotification(`Auto-clicker purchased! Total: ${game.autoClickers}`);
-            }
-        }
-
-        function buyUpgrade(type, index) {
-            const upgrade = game.upgrades[type][index];
-            
-            // Check requirements
-            if (upgrade.requires && upgrade.requires.length > 0) {
-                const missing = upgrade.requires.filter(req => 
-                    !game.upgrades[type].find(u => u.id === req && u.purchased)
-                );
-                
-                if (missing.length > 0) {
-                    const missingNames = missing.map(m => 
-                        game.upgrades[type].find(u => u.id === m).name
-                    ).join(', ');
-                    showNotification(`Requires: ${missingNames}`, true);
-                    return;
-                }
-            }
-            
-            // Check special requirements
-            if (upgrade.requiresPrestige && game.prestigeLevel < 1) {
-                showNotification("Requires at least 1 Prestige!", true);
-                return;
-            }
-            
-            if (upgrade.requiresRebirth && game.rebirthLevel < 1) {
-                showNotification("Requires at least 1 Rebirth!", true);
-                return;
-            }
-            
-            if (!upgrade.purchased && game.resources >= upgrade.cost) {
-                game.resources -= upgrade.cost;
-                upgrade.purchased = true;
-                if (upgrade.effect) upgrade.effect();
-                showNotification(`Upgrade purchased: ${upgrade.name}`);
-            }
-        }
-
-        function performPrestige() {
-            if (game.resources >= game.nextPrestigeAt) {
-                game.prestigeLevel++;
-                game.prestigeBonus = 1 + (game.prestigeLevel * 0.5);
-                
-                // Reset game state but keep prestige bonuses
-                game.resources = 0;
-                game.baseClickPower = 1;
-                game.autoClickers = 0;
-                game.autoClickerCost = 15;
-                game.autoClickMultiplier = 1;
-                
-                // Reset non-prestige upgrades
-                game.upgrades.click.forEach(u => u.purchased = false);
-                game.upgrades.auto.forEach(u => u.purchased = false);
-                
-                showNotification(`Prestige ${game.prestigeLevel} achieved!`);
-                createParticles(100);
-                
-                // Save immediately after prestige
-                saveGame();
-            } else {
-                showNotification(`You need ${formatNumber(game.nextPrestigeAt)} energy to prestige!`, true);
-            }
-        }
-
-        function performRebirth() {
-            if (game.resources >= game.nextRebirthAt && game.selectedRebirthUpgrade) {
-                game.rebirthLevel++;
-                
-                // Apply selected rebirth upgrade
-                game.rebirthUpgrades.push(game.selectedRebirthUpgrade);
-                
-                // Calculate new rebirth bonus
-                game.rebirthBonus = 1;
-                game.rebirthUpgrades.forEach(upgrade => {
-                    switch(upgrade) {
-                        case 'click-power':
-                            game.clickMultiplier *= 2;
-                            break;
-                        case 'auto-speed':
-                            game.autoClickMultiplier *= 2;
-                            break;
-                        case 'energy-gain':
-                            game.rebirthBonus *= 2;
-                            break;
-                        case 'upgrade-cost':
-                            // Handled in cost calculations
-                            break;
-                    }
-                });
-                
-                // Reset game state
-                game.resources = 0;
-                game.prestigeLevel = 0;
-                game.prestigeBonus = 1;
-                game.baseClickPower = 1;
-                game.autoClickers = 0;
-                game.autoClickerCost = 15;
-                game.autoClickMultiplier = 1;
-                
-                // Reset all upgrades
-                Object.values(game.upgrades).forEach(category => {
-                    category.forEach(u => u.purchased = false);
-                });
-                
-                // Close modal
-                elements.rebirthModal.classList.remove('active');
-                elements.rebirthOptions.forEach(opt => opt.classList.remove('selected'));
-                game.selectedRebirthUpgrade = null;
-                
-                showNotification(`Rebirth ${game.rebirthLevel} completed!`);
-                createParticles(200, undefined, undefined, '#ff3366');
-                
-                // Save immediately after rebirth
-                saveGame();
-            } else if (!game.selectedRebirthUpgrade) {
-                showNotification("Please select a rebirth upgrade first!", true);
-            }
-        }
-
-        // =============================================
-        // UI Functions
-        // =============================================
-        function switchShopTab(tab) {
-            elements.shopTabs.forEach(t => t.classList.remove('active'));
-            document.querySelector(`.shop-tab[data-tab="${tab}"]`).classList.add('active');
-            
-            document.querySelectorAll('.upgrade-tab').forEach(el => el.style.display = 'none');
-            document.getElementById(`${tab}-upgrades`).style.display = 'block';
-        }
-
-        function generateUpgradeElements() {
-            // Click upgrades
-            game.upgrades.click.forEach((upgrade, index) => {
-                const element = document.createElement('div');
-                
-                const requirementsText = upgrade.requires.length > 0 ? 
-                    `<div class="upgrade-requirements">Requires: ${
-                        upgrade.requires.map(req => 
-                            game.upgrades.click.find(u => u.id === req).name
-                        ).join(', ')
-                    }</div>` : '';
-                
-                element.innerHTML = `
-                    <div class="upgrade-header">
-                        <div class="upgrade-name">${upgrade.name}</div>
-                        <div class="upgrade-cost">${formatNumber(upgrade.cost)}</div>
-                    </div>
-                    <div class="upgrade-description">${upgrade.description}</div>
-                    ${requirementsText}
-                `;
-                
-                element.addEventListener('click', () => buyUpgrade('click', index));
-                elements.clickUpgrades.appendChild(element);
-            });
-            
-            // Auto upgrades
-            game.upgrades.auto.forEach((upgrade, index) => {
-                const element = document.createElement('div');
-                
-                const requirementsText = upgrade.requires.length > 0 ? 
-                    `<div class="upgrade-requirements">Requires: ${
-                        upgrade.requires.map(req => 
-                            game.upgrades.auto.find(u => u.id === req).name
-                        ).join(', ')
-                    }</div>` : '';
-                
-                element.innerHTML = `
-                    <div class="upgrade-header">
-                        <div class="upgrade-name">${upgrade.name}</div>
-                        <div class="upgrade-cost">${formatNumber(upgrade.cost)}</div>
-                    </div>
-                    <div class="upgrade-description">${upgrade.description}</div>
-                    ${requirementsText}
-                `;
-                
-                element.addEventListener('click', () => buyUpgrade('auto', index));
-                elements.autoUpgrades.appendChild(element);
-            });
-            
-            // Prestige upgrades
-            game.upgrades.prestige.forEach((upgrade, index) => {
-                const element = document.createElement('div');
-                
-                element.innerHTML = `
-                    <div class="upgrade-header">
-                        <div class="upgrade-name">${upgrade.name}</div>
-                        <div class="upgrade-cost">${formatNumber(upgrade.cost)} prestige</div>
-                    </div>
-                    <div class="upgrade-description">${upgrade.description}</div>
-                    <div class="upgrade-requirements">Requires at least 1 Prestige</div>
-                `;
-                
-                element.addEventListener('click', () => buyUpgrade('prestige', index));
-                elements.prestigeUpgrades.appendChild(element);
-            });
-            
-            // Rebirth upgrades
-            game.upgrades.rebirth.forEach((upgrade, index) => {
-                const element = document.createElement('div');
-                
-                element.innerHTML = `
-                    <div class="upgrade-header">
-                        <div class="upgrade-name">${upgrade.name}</div>
-                        <div class="upgrade-cost">${formatNumber(upgrade.cost)} rebirth</div>
-                    </div>
-                    <div class="upgrade-description">${upgrade.description}</div>
-                    <div class="upgrade-requirements">Requires at least 1 Rebirth</div>
-                `;
-                
-                element.addEventListener('click', () => buyUpgrade('rebirth', index));
-                elements.rebirthUpgrades.appendChild(element);
-            });
-        }
-
-        function updateShopItems() {
-            // Click upgrades
-            game.upgrades.click.forEach((upgrade, index) => {
-                const element = elements.clickUpgrades.children[index];
-                const canAfford = game.resources >= upgrade.cost;
-                const requirementsMet = upgrade.requires.every(req => 
-                    game.upgrades.click.find(u => u.id === req && u.purchased)
-                );
-                
-                element.className = `upgrade-item ${
-                    upgrade.purchased ? 'owned' : 
-                    !requirementsMet ? 'locked' : 
-                    canAfford ? '' : 'disabled'
-                }`;
-            });
-            
-            // Auto upgrades
-            game.upgrades.auto.forEach((upgrade, index) => {
-                const element = elements.autoUpgrades.children[index];
-                const canAfford = game.resources >= upgrade.cost;
-                const requirementsMet = upgrade.requires.every(req => 
-                    game.upgrades.auto.find(u => u.id === req && u.purchased)
-                );
-                
-                element.className = `upgrade-item ${
-                    upgrade.purchased ? 'owned' : 
-                    !requirementsMet ? 'locked' : 
-                    canAfford ? '' : 'disabled'
-                }`;
-            });
-            
-            // Prestige upgrades
-            game.upgrades.prestige.forEach((upgrade, index) => {
-                const element = elements.prestigeUpgrades.children[index];
-                const canAfford = game.prestigeLevel >= upgrade.cost;
-                const requirementsMet = game.prestigeLevel > 0;
-                
-                element.className = `upgrade-item ${
-                    upgrade.purchased ? 'owned' : 
-                    !requirementsMet ? 'locked' : 
-                    canAfford ? '' : 'disabled'
-                }`;
-            });
-            
-            // Rebirth upgrades
-            game.upgrades.rebirth.forEach((upgrade, index) => {
-                const element = elements.rebirthUpgrades.children[index];
-                const canAfford = game.rebirthLevel >= upgrade.cost;
-                const requirementsMet = game.rebirthLevel > 0;
-                
-                element.className = `upgrade-item ${
-                    upgrade.purchased ? 'owned' : 
-                    !requirementsMet ? 'locked' : 
-                    canAfford ? '' : 'disabled'
-                }`;
-            });
-        }
-
-        function showNotification(message, isError = false) {
-            elements.notificationMessage.textContent = message;
-            elements.notification.className = `notification ${isError ? 'error' : ''}`;
-            elements.notification.classList.add('show');
-            
-            setTimeout(() => {
-                elements.notification.classList.remove('show');
-            }, 3000);
-        }
-
-        function createParticles(count, x, y, color) {
-            const centerX = x || Math.random() * window.innerWidth;
-            const centerY = y || Math.random() * window.innerHeight;
-            
-            for (let i = 0; i < count; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                
-                game.particles.push({
-                    x: centerX,
-                    y: centerY,
-                    angle: Math.random() * Math.PI * 2,
-                    speed: 1 + Math.random() * 3,
-                    size: 2 + Math.random() * 5,
-                    life: 30 + Math.random() * 50,
-                    color: color || `hsl(${Math.random() * 60 + 200}, 100%, 70%)`,
-                    element: particle
-                });
-                
-                document.body.appendChild(particle);
-            }
-        }
-
-        // =============================================
-        // Save/Load System
-        // =============================================
+        // Save game
         function saveGame() {
             const saveData = {
-                version: 2, // Version identifier for save compatibility
+                version: 4,
                 resources: game.resources,
                 totalResources: game.totalResources,
                 clicks: game.clicks,
@@ -1193,137 +1119,267 @@
                 prestigeLevel: game.prestigeLevel,
                 rebirthLevel: game.rebirthLevel,
                 rebirthUpgrades: game.rebirthUpgrades,
-                // Only save purchased upgrade IDs
                 purchasedUpgrades: [
                     ...game.upgrades.click.filter(u => u.purchased).map(u => u.id),
                     ...game.upgrades.auto.filter(u => u.purchased).map(u => u.id),
                     ...game.upgrades.prestige.filter(u => u.purchased).map(u => u.id),
                     ...game.upgrades.rebirth.filter(u => u.purchased).map(u => u.id)
                 ],
+                unlockedAdvancements: game.unlockedAdvancements,
+                hasGivenFirstAutoClicker: game.hasGivenFirstAutoClicker,
                 playTime: game.playTime + (Date.now() - game.startTime) / 1000
             };
             
-            try {
-                localStorage.setItem('cosmicClickerSave', JSON.stringify(saveData));
-                console.log("Game saved successfully");
-            } catch (e) {
-                console.error("Failed to save game:", e);
-                showNotification("Failed to save game!", true);
-            }
+            localStorage.setItem('cosmicClickerSave', JSON.stringify(saveData));
         }
 
+        // Load game
         function loadGame() {
-            const saveString = localStorage.getItem('cosmicClickerSave');
-            if (!saveString) {
-                console.log("No save data found, starting fresh");
-                return;
-            }
+            const saveData = localStorage.getItem('cosmicClickerSave');
+            if (!saveData) return;
             
             try {
-                const saveData = JSON.parse(saveString);
+                const parsed = JSON.parse(saveData);
                 
                 // Basic validation
-                if (!saveData.version || typeof saveData.resources !== 'number') {
-                    throw new Error("Invalid save data format");
+                if (!parsed.version || typeof parsed.resources !== 'number') {
+                    throw new Error("Invalid save data");
                 }
                 
-                // Restore simple values
-                game.resources = saveData.resources || 0;
-                game.totalResources = saveData.totalResources || 0;
-                game.clicks = saveData.clicks || 0;
-                game.baseClickPower = saveData.baseClickPower || 1;
-                game.autoClickers = saveData.autoClickers || 0;
-                game.autoClickerCost = saveData.autoClickerCost || 15;
-                game.autoClickMultiplier = saveData.autoClickMultiplier || 1;
-                game.prestigeLevel = saveData.prestigeLevel || 0;
-                game.rebirthLevel = saveData.rebirthLevel || 0;
-                game.rebirthUpgrades = saveData.rebirthUpgrades || [];
-                game.playTime = saveData.playTime || 0;
+                // Load simple values
+                game.resources = parsed.resources || 0;
+                game.totalResources = parsed.totalResources || 0;
+                game.clicks = parsed.clicks || 0;
+                game.baseClickPower = 1; // Reset to 1, we'll calculate properly below
+                game.autoClickers = parsed.autoClickers || 0;
+                game.autoClickerCost = parsed.autoClickerCost || 15;
+                game.autoClickMultiplier = 1; // Reset to 1, we'll calculate properly below
+                game.prestigeLevel = parsed.prestigeLevel || 0;
+                game.rebirthLevel = parsed.rebirthLevel || 0;
+                game.rebirthUpgrades = parsed.rebirthUpgrades || [];
+                game.playTime = parsed.playTime || 0;
+                game.hasGivenFirstAutoClicker = parsed.hasGivenFirstAutoClicker || false;
                 game.startTime = Date.now();
                 
-                // Restore rebirth upgrades effects
-                game.rebirthBonus = 1;
-                game.clickMultiplier = 1;
-                game.rebirthUpgrades.forEach(upgrade => {
-                    switch(upgrade) {
-                        case 'click-power':
-                            game.clickMultiplier *= 2;
-                            break;
-                        case 'auto-speed':
-                            game.autoClickMultiplier *= 2;
-                            break;
-                        case 'energy-gain':
-                            game.rebirthBonus *= 2;
-                            break;
-                    }
-                });
+                // Calculate bonuses
+                game.prestigeBonus = 1 + (game.prestigeLevel * 0.5);
+                game.rebirthBonus = 1 + (game.rebirthLevel * 0.5);
                 
-                // Restore purchased upgrades
-                if (Array.isArray(saveData.purchasedUpgrades)) {
-                    saveData.purchasedUpgrades.forEach(upgradeId => {
-                        // Check all upgrade categories
-                        for (const category of ['click', 'auto', 'prestige', 'rebirth']) {
-                            const upgrade = game.upgrades[category].find(u => u.id === upgradeId);
+                // Initialize upgrades and advancements first
+                initUpgrades();
+                initAdvancements();
+                
+                // Mark upgrades as purchased without applying effects yet
+                if (Array.isArray(parsed.purchasedUpgrades)) {
+                    parsed.purchasedUpgrades.forEach(upgradeId => {
+                        for (const type of ['click', 'auto', 'prestige', 'rebirth']) {
+                            const upgrade = game.upgrades[type].find(u => u.id === upgradeId);
                             if (upgrade) {
                                 upgrade.purchased = true;
-                                if (upgrade.effect) upgrade.effect();
                                 break;
                             }
                         }
                     });
                 }
                 
+                // Mark advancements as unlocked
+                if (Array.isArray(parsed.unlockedAdvancements)) {
+                    game.unlockedAdvancements = parsed.unlockedAdvancements;
+                    game.advancements.forEach(a => {
+                        if (game.unlockedAdvancements.includes(a.id)) {
+                            a.unlocked = true;
+                        }
+                    });
+                }
+                
+                // Now calculate the correct base values based on purchased upgrades
+                game.upgrades.click.forEach(upgrade => {
+                    if (upgrade.purchased && upgrade.effect) {
+                        upgrade.effect();
+                    }
+                });
+                
+                game.upgrades.auto.forEach(upgrade => {
+                    if (upgrade.purchased && upgrade.effect) {
+                        upgrade.effect();
+                    }
+                });
+                
+                game.upgrades.prestige.forEach(upgrade => {
+                    if (upgrade.purchased && upgrade.effect) {
+                        upgrade.effect();
+                    }
+                });
+                
+                game.upgrades.rebirth.forEach(upgrade => {
+                    if (upgrade.purchased && upgrade.effect) {
+                        upgrade.effect();
+                    }
+                });
+                
+                // Apply advancement effects
+                game.advancements.forEach(a => {
+                    if (a.unlocked && a.effect) {
+                        a.effect();
+                    }
+                });
+                
                 console.log("Game loaded successfully");
             } catch (e) {
                 console.error("Failed to load save:", e);
-                showNotification("Failed to load save, starting fresh", true);
                 resetGame();
             }
         }
 
+        // Reset game
         function resetGame() {
-            // Reset all game state
+            if (!confirm("Are you sure you want to reset ALL progress? This cannot be undone!")) return;
+            
             game.resources = 0;
             game.totalResources = 0;
             game.clicks = 0;
             game.baseClickPower = 1;
-            game.clickMultiplier = 1;
             game.autoClickers = 0;
             game.autoClickerCost = 15;
             game.autoClickMultiplier = 1;
             game.prestigeLevel = 0;
-            game.prestigeBonus = 1;
             game.rebirthLevel = 0;
-            game.rebirthBonus = 1;
             game.rebirthUpgrades = [];
             game.playTime = 0;
             game.startTime = Date.now();
+            game.unlockedAdvancements = [];
+            game.hasGivenFirstAutoClicker = false;
             
-            // Reset all upgrades
-            Object.values(game.upgrades).forEach(category => {
-                category.forEach(upgrade => {
-                    upgrade.purchased = false;
+            // Reset upgrades and advancements
+            initUpgrades();
+            initAdvancements();
+            
+            localStorage.removeItem('cosmicClickerSave');
+            updateUI();
+            renderUpgrades('click');
+            renderAdvancements();
+        }
+
+        // Prestige
+        function performPrestige() {
+            const required = 100000 * Math.pow(2, game.prestigeLevel);
+            if (game.resources >= required) {
+                game.prestigeLevel++;
+                game.prestigeBonus = 1 + (game.prestigeLevel * 0.5);
+                
+                // Reset game state
+                game.resources = 0;
+                game.baseClickPower = 1;
+                game.autoClickers = 0;
+                game.autoClickerCost = 15;
+                game.autoClickMultiplier = 1;
+                game.hasGivenFirstAutoClicker = false;
+                
+                // Reset non-prestige upgrades
+                game.upgrades.click.forEach(u => u.purchased = false);
+                game.upgrades.auto.forEach(u => u.purchased = false);
+                
+                saveGame();
+                updateUI();
+                renderUpgrades('click');
+                checkAdvancements();
+                
+                showNotification(`Prestige ${game.prestigeLevel} achieved!`);
+            }
+        }
+
+        // Rebirth
+        function performRebirth() {
+            const required = 1000000 * Math.pow(3, game.rebirthLevel);
+            if (game.resources >= required) {
+                game.rebirthLevel++;
+                game.rebirthBonus = 1 + (game.rebirthLevel * 0.5);
+                
+                // Reset game state
+                game.resources = 0;
+                game.prestigeLevel = 0;
+                game.prestigeBonus = 1;
+                game.baseClickPower = 1;
+                game.autoClickers = 0;
+                game.autoClickerCost = 15;
+                game.autoClickMultiplier = 1;
+                game.hasGivenFirstAutoClicker = false;
+                
+                // Reset all upgrades
+                Object.values(game.upgrades).forEach(category => {
+                    category.forEach(u => u.purchased = false);
+                });
+                
+                saveGame();
+                updateUI();
+                renderUpgrades('click');
+                checkAdvancements();
+                
+                showNotification(`Rebirth ${game.rebirthLevel} achieved!`);
+            }
+        }
+
+        // Initialize the game
+        function init() {
+            initUpgrades();
+            initAdvancements();
+            loadGame();
+            
+            // Setup event listeners
+            elements.clicker.addEventListener('click', () => {
+                const gain = game.clickPower;
+                game.resources += gain;
+                game.totalResources += gain;
+                game.clicks++;
+                
+                // Show floating text
+                const floatText = document.createElement('div');
+                floatText.className = 'float-text';
+                floatText.textContent = `+${formatNumber(gain)}`;
+                floatText.style.left = `${elements.clickerContainer.offsetLeft + elements.clickerContainer.offsetWidth/2}px`;
+                floatText.style.top = `${elements.clickerContainer.offsetTop}px`;
+                
+                document.body.appendChild(floatText);
+                
+                setTimeout(() => {
+                    floatText.remove();
+                }, 1000);
+                
+                updateUI();
+                checkAdvancements();
+            });
+            
+            elements.prestigeBtn.addEventListener('click', performPrestige);
+            elements.rebirthBtn.addEventListener('click', performRebirth);
+            elements.resetBtn.addEventListener('click', resetGame);
+            
+            // Tab switching
+            elements.tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    elements.tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    if (tab.dataset.tab === 'advancements') {
+                        elements.shop.classList.add('hidden');
+                        elements.advancementsContainer.classList.remove('hidden');
+                    } else {
+                        elements.shop.classList.remove('hidden');
+                        elements.advancementsContainer.classList.add('hidden');
+                        renderUpgrades(tab.dataset.tab);
+                    }
                 });
             });
             
-            // Clear save data
-            localStorage.removeItem('cosmicClickerSave');
+            // Start with click upgrades
+            renderUpgrades('click');
+            renderAdvancements();
             
-            console.log("Game reset to default state");
-            showNotification("Game reset to default");
+            // Start game loop
+            gameLoop();
             
-            // Refresh UI
-            generateUpgradeElements();
-        }
-
-        // =============================================
-        // Utility Functions
-        // =============================================
-        function formatNumber(num) {
-            if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B';
-            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-            return Math.floor(num);
+            // Auto-save
+            setInterval(saveGame, 30000);
+            window.addEventListener('beforeunload', saveGame);
         }
 
         // Start the game
